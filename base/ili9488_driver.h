@@ -14,8 +14,8 @@
 //==============================================================================
 // Include Guard: Macro to prevent multiple inclusions
 //==============================================================================
-#ifndef GLCD_ILI9488_DRIVER_H
-#define GLCD_ILI9488_DRIVER_H
+#ifndef ILI9488_DRIVER
+#define ILI9488_DRIVER
 
 #include "system.h"
 
@@ -56,8 +56,10 @@ void ILI9488_SendByte(ili9488_interface_t interface, uint8_t data);
 // Send/receive data to/from ILI9488
 void ILI9488_TransferData(ili9488_interface_t interface, uint8_t * data_to_screen, uint8_t * data_from_screen, size_t len);
 
+void ILI9488_ReadData(ili9488_interface_t interface, uint8_t* data_from_screen, size_t len);
+
 // Initialize ILI9488 using SPI1 (MSSP)
-ili9488_interface_t ILI9488_Initialize(ili9488_interface_t interface);
+void ILI9488_Initialize(ili9488_interface_t interface);
 
 // Set the drawing window (coordinates x, y, width w, height h)
 void ILI9488_Set_Window(ili9488_interface_t interface, uint16_t x, uint16_t y, uint16_t w, uint16_t h);

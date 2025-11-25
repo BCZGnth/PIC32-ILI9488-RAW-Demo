@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ssd1309_api.h"
+#include "ili9488_api.h"
 #include "logger.h"
 
 
@@ -13,23 +13,23 @@
  * @param ylength is expected to be length in bytes (how many bytes long in the y length)
  * @param bitmap expected to be a pointer to some value that is at leat a byte long so that
  */
-void ssd1309_write_bitmap(ScreenDefines Screen, Ssd1309WriteBitmap args) {
+void ili9488_write_bitmap(ScreenDefines Screen, Ili9488WriteBitmap args) {
     /** Preliminary checks that may or may not be useful... if a number is bigger than it is supposed to be, the extra bits will probably just be ignored. */
     // if( (args.xstart > args.xend) || (args.xstart > 128)) return;
     // if( (args.ystart > args.yend) || (args.ystart > 128)) return;
 
     /** Set RAM pointer constraints based on x and y values given */
-    ssd1309_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, VERTICAL_ADDRESSING);
-    ssd1309_send_command(Screen, SET_COLUMN_ADDRESS, args.xstart, args.xend);
+    ili9488_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, VERTICAL_ADDRESSING);
+    ili9488_send_command(Screen, SET_COLUMN_ADDRESS, args.xstart, args.xend);
 
     /** For now there is no deciding how to pad/ write odd size bitmaps. I hope your bitmap has a height multiple of 8...*/
-    ssd1309_send_command(Screen, SET_PAGE_ADDRESS, args.ystart / 8, args.yend / 8);
+    ili9488_send_command(Screen, SET_PAGE_ADDRESS, args.ystart / 8, args.yend / 8);
     size_t size = load_i2c_buffer(Screen, (uint8_t*)(&SSD1309_RAM_WRITE_BYTE), 1, args.pbitmap, args.length);
 
     ssd_write(Screen, size);
 
-    ssd1309_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
-    ssd1309_set_ram_pointer(Screen, Screen.zeroed_ram_ptr);
+    ili9488_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
+    ili9488_set_ram_pointer(Screen, Screen.zeroed_ram_ptr);
 }
 
 
@@ -42,7 +42,7 @@ void ssd1309_write_bitmap(ScreenDefines Screen, Ssd1309WriteBitmap args) {
  * @param y_start defines the TOP-most bit (pixel) or 8-bit page (if in page addressing mode)
  * @param y_end Not Implemented. For advanced box defining that will come in handy when writing text to the screen
  */
-// void ssd1309_ramWrite(ScreenDefines Screen, Ssd1309RamWrite args) {
+// void ili9488_ramWrite(ScreenDefines Screen, Ili9488RamWrite args) {
 //     size_t size = load_i2c_buffer(Screen, (uint8_t*)(&SSD1309_RAM_WRITE_BYTE), 1, args.bitmap,  args.bitmap_length);
 
 //     ssd_write(Screen, size);
@@ -61,7 +61,7 @@ print at one time.
  * @brief are specified in the length paramater of the function.
  *
  * @param     Screen: the screenDefines structure that general screen definitions
- * @param     args: the Ssd1309WriteNumber struct that holds the specific paramaters for writing a number to the screen 
+ * @param     args: the Ili9488WriteNumber struct that holds the specific paramaters for writing a number to the screen 
  *
  * This function first converts the integer data coming in, into string data using the snprintf function
  *
@@ -102,9 +102,9 @@ print at one time.
  *      This is only possible because the i2c buffer is loaded with zeros before any data gets written to it.
  *
  */
-size_t ssd1309_write_number(ScreenDefines Screen, Ssd1309WriteNumber args) {
+size_t ili9488_write_number(ScreenDefines Screen, Ili9488WriteNumber args) {
 
-    ADD_TO_STACK_DEPTH(); // ssd1309_write_number
+    ADD_TO_STACK_DEPTH(); // ili9488_write_number
     level_log(TRACE, "Writing Number: %d", args.data);
 
     /** 
@@ -117,7 +117,7 @@ size_t ssd1309_write_number(ScreenDefines Screen, Ssd1309WriteNumber args) {
         return 0;
     }
 
-    ssd1309_set_ram_pointer(Screen, args.ram_ptr);
+    ili9488_set_ram_pointer(Screen, args.ram_ptr);
 
     uint8_t n;
     uint8_t number_of_chars_written; // the snprintf function actually returns an integer value, but I hope that the amount of characters will never exceed 256...
@@ -179,16 +179,16 @@ size_t ssd1309_write_number(ScreenDefines Screen, Ssd1309WriteNumber args) {
     ssd_write(Screen, write_length); // The number of bytes to write to the i2c buffer is the number of characters multiplied by the width of each character (5) plus the padding (1 byte) between each character
 
     // Memory addressing mode back to page addressing
-    ssd1309_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
+    ili9488_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
 
     // Set the column range back to its reset value
-    ssd1309_send_command(Screen, SET_COLUMN_ADDRESS, 0x0, 0xFF);
+    ili9488_send_command(Screen, SET_COLUMN_ADDRESS, 0x0, 0xFF);
 
     // Set the page range back to its reset value
-    ssd1309_send_command(Screen, SET_PAGE_ADDRESS, 0x0, 0x7);
+    ili9488_send_command(Screen, SET_PAGE_ADDRESS, 0x0, 0x7);
 
     level_log(TRACE, "SSD1309: Done Writing Number");
-    REMOVE_FROM_STACK_DEPTH(); // ssd1309_write_number
+    REMOVE_FROM_STACK_DEPTH(); // ili9488_write_number
 
     return args.constrained_length * 6;
 }
@@ -196,14 +196,14 @@ size_t ssd1309_write_number(ScreenDefines Screen, Ssd1309WriteNumber args) {
 
 /**
  * @param     Screen: the screenDefines structure that general screen definitions
- * @param     args: the Ssd1309WriteNumber struct that holds the specific paramaters for writing a number to the screen 
+ * @param     args: the Ili9488WriteNumber struct that holds the specific paramaters for writing a number to the screen 
  *
  * @brief A function to print a string on the screen
  */
-size_t ssd1309_print(ScreenDefines Screen, Ssd1309Print args) {
+size_t ili9488_print(ScreenDefines Screen, Ili9488Print args) {
 
     
-    ADD_TO_STACK_DEPTH(); // ssd1309_print    
+    ADD_TO_STACK_DEPTH(); // ili9488_print    
     level_log(TRACE, "Printing: \"%s\"", args.text);
     
     
@@ -222,7 +222,7 @@ size_t ssd1309_print(ScreenDefines Screen, Ssd1309Print args) {
     /* Error Checks */
     // Length is zero
     if(!args.length) {
-        level_log(ERROR, "type <Ssd1309Print> args.length not defined");
+        level_log(ERROR, "type <Ili9488Print> args.length not defined");
         return 0;
     }
     // If the bytes length will be larger than the buffer size
@@ -232,9 +232,9 @@ size_t ssd1309_print(ScreenDefines Screen, Ssd1309Print args) {
     }
 
     /* Constrain the columns so that we skip the first and last. This way frames don't get overwritten */
-    ssd1309_send_command(Screen, SET_COLUMN_ADDRESS, 1, 126);
+    ili9488_send_command(Screen, SET_COLUMN_ADDRESS, 1, 126);
 
-    ssd1309_set_ram_pointer(Screen, args.ram_ptr); // Put the cursor where specified in the args structure
+    ili9488_set_ram_pointer(Screen, args.ram_ptr); // Put the cursor where specified in the args structure
 
     // char message_chars[48];
     // uint8_t message_chars_length = sizeof(message_chars);
@@ -258,13 +258,13 @@ size_t ssd1309_print(ScreenDefines Screen, Ssd1309Print args) {
             level_log(TRACE, "Print: Scaling the text by 2");
 
             // Set addressing to vertical addressing. (simulate page addressing but across two pages instead of one)
-            ssd1309_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, VERTICAL_ADDRESSING);
+            ili9488_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, VERTICAL_ADDRESSING);
 
             // Set the column range from whatever the start position is equal to and go to the end of the screen 
-            ssd1309_send_command(Screen, SET_COLUMN_ADDRESS, args.ram_ptr.position, 0xFF);
+            ili9488_send_command(Screen, SET_COLUMN_ADDRESS, args.ram_ptr.position, 0xFF);
 
             // Set the page range to 2 since each page is 8 pixels tall, and we are scaling by 2, that gives us 16 pixels of height
-            ssd1309_send_command(Screen, SET_PAGE_ADDRESS, args.ram_ptr.page, args.ram_ptr.page + 1);
+            ili9488_send_command(Screen, SET_PAGE_ADDRESS, args.ram_ptr.page, args.ram_ptr.page + 1);
 
             ADD_TO_STACK_DEPTH(); // loading i2c buffer with scaled data
 
@@ -436,27 +436,27 @@ size_t ssd1309_print(ScreenDefines Screen, Ssd1309Print args) {
     } // Switch(args.delay)
 
     // Memory addressing mode back to page addressing
-    ssd1309_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
+    ili9488_send_command(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
 
     // Set the column range back to its reset value
-    ssd1309_send_command(Screen, SET_COLUMN_ADDRESS, 0x0, 0xFF);
+    ili9488_send_command(Screen, SET_COLUMN_ADDRESS, 0x0, 0xFF);
 
     // Set the page range back to its reset value
-    ssd1309_send_command(Screen, SET_PAGE_ADDRESS, 0x0, 0x7);
+    ili9488_send_command(Screen, SET_PAGE_ADDRESS, 0x0, 0x7);
     level_log(TRACE, "Print: Done Printing. Setting Memory Addressing Mode to Page Addressing");
 
-    REMOVE_FROM_STACK_DEPTH(); // ssd1309_print
+    REMOVE_FROM_STACK_DEPTH(); // ili9488_print
 
     return (args.length * 6);
 }
 
 
-void ssd1309_cls(ScreenDefines Screen) {
+void ili9488_cls(ScreenDefines Screen) {
 
     ADD_TO_STACK_DEPTH();
     level_log(TRACE, "Clearing the screen");
 
-    ssd1309_set_ram_pointer(Screen, Screen.zeroed_ram_ptr);
+    ili9488_set_ram_pointer(Screen, Screen.zeroed_ram_ptr);
 
     /* Calculate the most efficient way to clear the screen with the given buffer */
     // Calculate total screen size in bytes (assuming 1 bit per pixel, 8 pixels per byte vertically)
@@ -506,7 +506,7 @@ void ssd1309_cls(ScreenDefines Screen) {
 }
 
 
-void ssd1309_clear_line(ScreenDefines Screen, Ssd1309Clear args)
+void ili9488_clear_line(ScreenDefines Screen, Ili9488Clear args)
 {
 
     ADD_TO_STACK_DEPTH();
@@ -520,7 +520,7 @@ void ssd1309_clear_line(ScreenDefines Screen, Ssd1309Clear args)
     }
 
     Screen.zeroed_ram_ptr.page = args.start_page;
-    ssd1309_set_ram_pointer(Screen, Screen.zeroed_ram_ptr);
+    ili9488_set_ram_pointer(Screen, Screen.zeroed_ram_ptr);
 
     #ifndef USE_STATIC_BUFFERS
     Screen.pbuffer = malloc(129);
@@ -545,12 +545,12 @@ void ssd1309_clear_line(ScreenDefines Screen, Ssd1309Clear args)
     REMOVE_FROM_STACK_DEPTH();
 }
 
-void ssd1309_clear_word(ScreenDefines Screen, Ssd1309Clear args)
+void ili9488_clear_word(ScreenDefines Screen, Ili9488Clear args)
 {
     ADD_TO_STACK_DEPTH();
     level_log(TRACE, "Clearing a word of length %d", args.char_length);
 
-    ssd1309_set_ram_pointer(Screen, args.ram_ptr);
+    ili9488_set_ram_pointer(Screen, args.ram_ptr);
 
     #ifndef USE_STATIC_BUFFERS
     Screen.pbuffer = malloc(129);
@@ -578,7 +578,7 @@ void ssd1309_clear_word(ScreenDefines Screen, Ssd1309Clear args)
     REMOVE_FROM_STACK_DEPTH();
 }
 
-void ssd1309_blinking_cursor(ScreenDefines Screen, Ssd1309Cursor args)
+void ili9488_blinking_cursor(ScreenDefines Screen, Ili9488Cursor args)
 {
     /** Start by keeping track of how many function calls deep we are */
     ADD_TO_STACK_DEPTH();
@@ -593,7 +593,7 @@ void ssd1309_blinking_cursor(ScreenDefines Screen, Ssd1309Cursor args)
     /** malloc so that the cursor doesn't take up extra space */
     uint8_t cursor[5];
 
-    ssd1309_set_ram_pointer(Screen, args.ram_ptr);
+    ili9488_set_ram_pointer(Screen, args.ram_ptr);
 
     /** Modifying repeats to translate from number of repeats to iterations of the for loop that have to run */
     args.repeats *= 2;
@@ -610,7 +610,7 @@ void ssd1309_blinking_cursor(ScreenDefines Screen, Ssd1309Cursor args)
         size = load_i2c_buffer(Screen,(uint8_t*)(&SSD1309_RAM_WRITE_BYTE), 1, cursor, 5);
         ssd_write(Screen, size);
 
-        ssd1309_set_ram_pointer(Screen, args.ram_ptr);
+        ili9488_set_ram_pointer(Screen, args.ram_ptr);
         __delay_ms(200);
     }
 
@@ -618,18 +618,18 @@ void ssd1309_blinking_cursor(ScreenDefines Screen, Ssd1309Cursor args)
     REMOVE_FROM_STACK_DEPTH();
 }
 
-void ssd1309_progress_bar(ScreenDefines Screen )
+void ili9488_progress_bar(ScreenDefines Screen )
 {
     return;
 }
 
-void ssd1309_waiting(ScreenDefines Screen)
+void ili9488_waiting(ScreenDefines Screen)
 {
     ADD_TO_STACK_DEPTH();
     level_log(TRACE, "SSD1309 Waiting...");
     
     uint8_t animation_length = 14;
-    Ssd1309RamPointer wait_ram_ptr = {
+    Ili9488RamPointer wait_ram_ptr = {
         .page = 7,
         .position = 112
     };
@@ -640,12 +640,12 @@ void ssd1309_waiting(ScreenDefines Screen)
         return; 
     }
 
-    ssd1309_set_ram_pointer(Screen, wait_ram_ptr);
+    ili9488_set_ram_pointer(Screen, wait_ram_ptr);
 
     uint8_t dots[24] = {0, 0xc0, 0xc0, 0, 0,  0, 0xc0, 0xc0, 0, 0,  0, 0xc0, 0xc0, 0, 0,  0, 0, 0, 0, 0,   0, 0, 0, 0 };
     
     /* Depending on where we are in the cycle, either add another dot, or clear the space. 
-       We are using arrays instead of the ssd1309_print function because this is at least a little faster. */
+       We are using arrays instead of the ili9488_print function because this is at least a little faster. */
     switch (Screen.pwait->three_ctr) {
         case 0:
             memset(Screen.pbuffer, SSD1309_RAM_WRITE_BYTE, Screen.offset.control);

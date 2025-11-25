@@ -1,5 +1,5 @@
-#ifndef _ili9488_BASE
-#define _ili9488_BASE
+#ifndef _ILI9488_BASE
+#define _ILI9488_BASE
 
 #include <stdint.h>
 
@@ -8,58 +8,45 @@
 /* 
  * Command Structures
  *
- * ili9488CommandLengths: Another not especially helpful structure... 
+ * Ili9488CommandLengths: Another not especially helpful structure... 
  * 
- * ili9488RamPointer
+ * Ili9488RamPointer
  */
 typedef struct unusedCommandLengths{
     uint8_t set_ram_pointer;
     uint8_t send_command;
     uint8_t startup;
     uint8_t init;
-} ili9488CommandLengths;
+} Ili9488CommandLengths;
 
 typedef struct CursorPointer{
-    uint8_t page;
-    uint8_t position;
-} ili9488RamPointer;
+    uint16_t row;
+    uint16_t column;
+} Ili9488RamPointer;
 
 /* 
  * API Structures
  *
- * ili9488WriteNumber
+ * Ili9488WriteNumber
  * 
- * ili9488Print
+ * Ili9488Print
  * 
- * ili9488Prnt
+ * Ili9488Prnt
  * 
- * ili9488CommandLengths
+ * Ili9488CommandLengths
  * 
- * ili9488Cursor
+ * Ili9488Cursor
  * 
- * ili9488WriteBitmap
+ * Ili9488WriteBitmap
  * 
- * ili9488WriteNumber
+ * Ili9488WriteNumber
  * 
- * ili9488VLine
+ * Ili9488VLine
  * 
- * ili9488HLine
+ * Ili9488HLine
  * 
- * ili9488Rect
- * 
- * ScreenStringPerLine
+ * Ili9488Rect
  */
-typedef struct ScreenString{
-    uint8_t line_length;
-    char* line0;
-    char* line1;
-    char* line2;
-    char* line3;
-    char* line4;
-    char* line5;
-    char* line6;
-    char* line7;
-} ScreenStringPerLine;
 
 typedef struct WriteNumber{
     uint32_t data;
@@ -67,8 +54,8 @@ typedef struct WriteNumber{
     // uint8_t right_align;
     uint8_t scale;
 
-    ili9488RamPointer ram_ptr;
-} ili9488WriteNumber;
+    Ili9488RamPointer ram_ptr;
+} Ili9488WriteNumber;
 
 typedef struct Print{
     const char * text;
@@ -76,8 +63,8 @@ typedef struct Print{
     uint8_t      delay;
     uint8_t      scale;
 
-    ili9488RamPointer ram_ptr;
-} ili9488Print;
+    Ili9488RamPointer ram_ptr;
+} Ili9488Print;
 
 /* A combination of the Print and Write number structures */
 typedef struct Prnt{
@@ -89,8 +76,8 @@ typedef struct Prnt{
     uint8_t      delay;
     uint8_t      scale;
 
-    ili9488RamPointer ram_ptr;
-} ili9488Prnt;
+    Ili9488RamPointer ram_ptr;
+} Ili9488Prnt;
 
 typedef struct WriteBitmap{
     uint8_t * pbitmap;
@@ -100,46 +87,46 @@ typedef struct WriteBitmap{
     uint8_t   xend;
     uint8_t   yend;
 
-    ili9488RamPointer ram_ptr;
-} ili9488WriteBitmap;
+    Ili9488RamPointer ram_ptr;
+} Ili9488WriteBitmap;
 
 typedef struct Cursor{
     uint8_t repeats;
 
-    ili9488RamPointer ram_ptr;
-} ili9488Cursor;
+    Ili9488RamPointer ram_ptr;
+} Ili9488Cursor;
 
 typedef struct RamWrite{
     uint8_t* bitmap;
     uint8_t bitmap_length;
 
-    ili9488RamPointer ram_ptr;
-} ili9488RamWrite;
+    Ili9488RamPointer ram_ptr;
+} Ili9488RamWrite;
 
 typedef struct ClearLine{
-    ili9488RamPointer ram_ptr;
+    Ili9488RamPointer ram_ptr;
     uint8_t char_length;
     uint8_t start_page;
     uint8_t end_page; 
-} ili9488Clear;
+} Ili9488Clear;
 
 typedef struct WaitAnimate{
-    ili9488RamPointer ram_ptr;
+    Ili9488RamPointer ram_ptr;
     uint8_t three_ctr;
-} ili9488Wait;
+} Ili9488Wait;
 
 typedef struct HVLine{
     uint8_t xstart;
     uint8_t ystart;
     uint8_t length;
-} ili9488HVLine;
+} Ili9488HVLine;
 
 typedef struct Rect{
     uint8_t xstart;
     uint8_t ystart;
     uint8_t xend;
     uint8_t yend;
-} ili9488Rect;
+} Ili9488Rect;
 
 
 /* Font Structures 
@@ -162,7 +149,7 @@ typedef struct CharacterAttributes{
 
 
 /* 
- * ili9488 Screen Defines:
+ * Ili9488 Screen Defines:
  * 
  * This is the main structure used in data transmission to the screen.
  * */
@@ -181,8 +168,8 @@ typedef struct ScreenMetaData{
     uint8_t* rst_lat_port;
     uint8_t  rst_pin;
 
-    ili9488RamPointer zeroed_ram_ptr;
-    ili9488Wait* pwait;
+    Ili9488RamPointer zeroed_ram_ptr;
+    Ili9488Wait* pwait;
 
     FontOffset offset;
     CharAttributes character;
@@ -194,17 +181,17 @@ typedef struct ScreenMetaData{
  */
 typedef struct GeneralScreenStruct{
     ScreenDefines Screen;
-    // ili9488WriteNumber write_number;
-    // ili9488Print print;
-    // ili9488Prnt PRINT;
-    // ili9488WriteBitmap write_bitmap;
-    // ili9488Cursor cursor;
-    // ili9488RamWrite ram_write;
-    // ili9488RamPointer ram_ptr;
-    // ili9488Clear clr_line;
-    ili9488Wait wait;
+    // Ili9488WriteNumber write_number;
+    // Ili9488Print print;
+    // Ili9488Prnt PRINT;
+    // Ili9488WriteBitmap write_bitmap;
+    // Ili9488Cursor cursor;
+    // Ili9488RamWrite ram_write;
+    // Ili9488RamPointer ram_ptr;
+    // Ili9488Clear clr_line;
+    Ili9488Wait wait;
     // ScreenStringPerLine screen_strings;
-} ili9488Defines;
+} Ili9488Defines;
 
 
-#endif // _ili9488_BASE
+#endif // _Ili9488_BASE

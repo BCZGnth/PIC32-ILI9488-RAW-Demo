@@ -17,8 +17,8 @@
 #include "SoftSPI.h"
 
 // ILI9488 driver function prototypes
-#include "GLCD_ILI9488_Driver.h"
-#include "GLCD_ILI9488_Commands.h"
+#include "ili9488_driver.h"
+#include "ili9488_commands.h"
 
 // static uint32_t i;
 
@@ -133,12 +133,26 @@ void ILI9488_TransferData(ili9488_interface_t interface, uint8_t* data_to_screen
     }
 }
 
+void ILI9488_ReadData(ili9488_interface_t interface, uint8_t* data_from_screen, size_t len)
+{
+    uint8_t u8_dummy_data;
+    
+    // Set data mode
+    *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
+    
+    // Data sending process (send/receive based on mode)
+    for(int i = 0; i < len; i++){
+        *(data_from_screen + i) = SoftSPI_Transfer(0, SOFT_SPI_MSB_FIRST);
+    }
+}
+
+
 // Function name   : ILI9488_Initialize
 // Functionality  : Initialize ILI9488 (3.2inch): X480 x Y320
 // Arguments      : None
 // Return         : Initialized interface
 // Conditions     : Must operate in SPI mode 3 (CKE=0, CKP=1, CPOL=1, CPHA=1)
-ili9488_interface_t ILI9488_Initialize(ili9488_interface_t interface)
+void ILI9488_Initialize(ili9488_interface_t interface)
 {
     SoftSPI_InitDataInPin(interface.spi_miso_port, interface.spi_miso_pin);
     SoftSPI_InitDataOutPin(interface.spi_mosi_port, interface.spi_mosi_pin);
@@ -156,9 +170,12 @@ ili9488_interface_t ILI9488_Initialize(ili9488_interface_t interface)
 
     // IDLE Mode OM (39h) (only allows 8-colors to be displayed instead of the 262,144 when not idle)
     ILI9488_SendCommand(interface, ILI9488_IDLE_MODE_ON);
+
+    // Display Inversion Off
+    ILI9488_SendCommand(interface, ILI9488_DISPLAY_INVERSION_OFF);
     
     // Interface Pixel Format (3Ah) = 0x01 (8bit)
-    ILI9488_SendCommand(interface, ILI9488_PIXEL_FORMAT_SET);
+    ILI9488_SendCommand(interface, ILI9488_INTERFACE_PIXEL_FORMAT);
     ILI9488_SendByte(interface, 0x66);
     
     // Memory Access Control (36h) : 0x48
@@ -167,7 +184,7 @@ ili9488_interface_t ILI9488_Initialize(ili9488_interface_t interface)
     ILI9488_SendByte(interface, 0x88);
     
     // Frame Rate Control (B2h)
-    ILI9488_SendCommand(interface, ILI9488_FRAME_RATE_CONTROL);
+    ILI9488_SendCommand(interface, ILI9488_FRAME_RATE_CONTROL_IDLE);
     ILI9488_SendByte(interface, 0x00);  // Recommended value (depends on datasheet)
     ILI9488_SendByte(interface, 0x80);
 
