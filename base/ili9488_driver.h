@@ -54,7 +54,7 @@ void ILI9488_SendData(ili9488_interface_t interface, uint8_t * data, size_t len)
 void ILI9488_SendByte(ili9488_interface_t interface, uint8_t data);
 
 // Send/receive data to/from ILI9488
-void ILI9488_TransferData(ili9488_interface_t interface, uint8_t * data_to_screen, uint8_t * data_from_screen, size_t len);
+void ILI9488_TransferData(ili9488_interface_t interface, uint8_t* exchange_data, size_t len);
 
 void ILI9488_ReadData(ili9488_interface_t interface, uint8_t* data_from_screen, size_t len);
 

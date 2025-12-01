@@ -146,7 +146,6 @@ void ILI9488_TransferData(ili9488_interface_t interface, uint8_t* exchange_data,
     
     // Data sending process (send from buffer and write back to the same buffer)
     SPI1_BufferExchange(exchange_data, len);
-    SPI1_Host.
     SPI1_Close();
 }
 
@@ -171,10 +170,10 @@ void ILI9488_ReadData(ili9488_interface_t interface, uint8_t* data_from_screen, 
 // Conditions     : Must operate in SPI mode 3 (CKE=0, CKP=1, CPOL=1, CPHA=1)
 void ILI9488_Initialize(ili9488_interface_t interface)
 {
-    SoftSPI_InitDataInPin(interface.spi_miso_port, interface.spi_miso_pin);
-    SoftSPI_InitDataOutPin(interface.spi_mosi_port, interface.spi_mosi_pin);
-    SoftSPI_InitClockPin(interface.spi_clock_port, interface.spi_clock_pin);
-    SoftSPI_InitSelectPin(interface.spi_cs_port, interface.spi_cs_pin);
+    // SoftSPI_InitDataInPin(interface.spi_miso_port, interface.spi_miso_pin);
+    // SoftSPI_InitDataOutPin(interface.spi_mosi_port, interface.spi_mosi_pin);
+    // SoftSPI_InitClockPin(interface.spi_clock_port, interface.spi_clock_pin);
+    // SoftSPI_InitSelectPin(interface.spi_cs_port, interface.spi_cs_pin);
 
     ILI9488_Reset(interface);
     __delay_ms(150); // See reset page (306-309) of datasheet. This is the longest necessary time needed after any hardware reset
