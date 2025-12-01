@@ -43,17 +43,21 @@ void ILI9488_Reset(ili9488_interface_t interface)
 // Conditions     : SPI1/MSSP and ILI9488 initialization must be completed
 void ILI9488_SendCommand(ili9488_interface_t interface, unsigned char cmd, uint8_t* pdata, size_t data_length)
 {
+    // 
+    SPI1_Open(HOST_CONFIG);
+
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     *(interface.spi_cs_port) &= ~(1 << interface.spi_cs_pin);
 
     // Set command mode (DC pin is command when LOW and data when HIGH)
     *(interface.spi_dc_port) &= ~(1 << interface.spi_dc_pin);
+
     
     // Command sending process
     // SendDataProc(data);
     
     // Ignore reception with void cast
-    (void)SoftSPI_Transfer(cmd, SOFT_SPI_MSB_FIRST);
+    SPI1_ByteWrite(cmd);
 
     // Set the dc pin high again for the data portion of the transmit
     __delay_us(1);
@@ -61,14 +65,15 @@ void ILI9488_SendCommand(ili9488_interface_t interface, unsigned char cmd, uint8
     __delay_us(1);
 
     // Send the command data
-    for(int i = 0; i < data_length; i++) {
-        (void)SoftSPI_Transfer(*(pdata + i), SOFT_SPI_MSB_FIRST);
-    }
+    SPI1_BufferWrite(pdata, data_length);
+
     // DMA sending process (use if necessary)
     //DMA_SPI1_Send_Byte_Proc(data);
 
     // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     *(interface.spi_cs_port) |= (1 << interface.spi_cs_pin);
+
+    SPI1_Close();
 }
 
 /* Function name   : ILI9488_SendData
@@ -77,8 +82,10 @@ void ILI9488_SendCommand(ili9488_interface_t interface, unsigned char cmd, uint8
  * Return         : None
  * Conditions     : SPI1/MSSP and ILI9488 initialization must be completed
  */
-void ILI9488_SendData(ili9488_interface_t interface, uint8_t* data, size_t len)
+void ILI9488_SendData(ili9488_interface_t interface, uint8_t* pdata, size_t data_length)
 {
+    SPI1_Open(HOST_CONFIG);
+
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     *(interface.spi_cs_port) &= ~(1 << interface.spi_cs_pin);
 
@@ -89,15 +96,15 @@ void ILI9488_SendData(ili9488_interface_t interface, uint8_t* data, size_t len)
     // SendDataProc(data);
     
     // Ignore reception with void cast
-    for(int i = 0; i < len; i++){
-        (void)SoftSPI_Transfer(*(data + i), SOFT_SPI_MSB_FIRST);
-    }
+    SPI1_BufferWrite(pdata, data_length);
 
     // DMA sending process (use if necessary)
     //DMA_SPI1_Send_Byte_Proc(data);
 
     // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     *(interface.spi_cs_port) |= ~(1 << interface.spi_cs_pin);
+
+    SPI1_Close();
 }
 
 /* Function name   : ILI9488_SendData
@@ -115,7 +122,7 @@ void ILI9488_SendByte(ili9488_interface_t interface, uint8_t data)
     *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
 
     // Ignore reception with void cast
-    (void)SoftSPI_Transfer(data, SOFT_SPI_MSB_FIRST);
+    SPI1_ByteWrite(data);
 
     // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     // *(interface.spi_cs_port) |= ~(1 << interface.spi_cs_pin);
@@ -129,30 +136,31 @@ void ILI9488_SendByte(ili9488_interface_t interface, uint8_t data)
 //
 // Return         : None (internal process handles reception if needed)
 // Conditions     : SPI1/MSSP and ILI9488 initialization must be completed
-void ILI9488_TransferData(ili9488_interface_t interface, uint8_t* data_to_screen, uint8_t* data_from_screen, size_t len)
+void ILI9488_TransferData(ili9488_interface_t interface, uint8_t* exchange_data, size_t len)
 {
+    SPI1_Open(HOST_CONFIG);
     uint8_t u8_dummy_data;
     
     // Set data mode
     *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
     
-    // Data sending process (send/receive based on mode)
-    for(int i = 0; i < len; i++){
-        *(data_from_screen + i) = SoftSPI_Transfer(*(data_to_screen + i), SOFT_SPI_MSB_FIRST);
-    }
+    // Data sending process (send from buffer and write back to the same buffer)
+    SPI1_BufferExchange(exchange_data, len);
+    SPI1_Host.
+    SPI1_Close();
 }
 
 void ILI9488_ReadData(ili9488_interface_t interface, uint8_t* data_from_screen, size_t len)
 {
+    SPI1_Open(HOST_CONFIG);
     uint8_t u8_dummy_data;
     
     // Set data mode
     *(interface.spi_dc_port) |= (1 << interface.spi_dc_pin);
     
     // Data sending process (send/receive based on mode)
-    for(int i = 0; i < len; i++){
-        *(data_from_screen + i) = SoftSPI_Transfer(0, SOFT_SPI_MSB_FIRST);
-    }
+    SPI1_BufferRead(data_from_screen, len);
+    SPI1_Close();
 }
 
 
