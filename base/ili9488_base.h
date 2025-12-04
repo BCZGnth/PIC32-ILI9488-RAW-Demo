@@ -119,8 +119,8 @@ typedef struct Cursor{
 } Ili9488Cursor;
 
 typedef struct RamWrite{
-    uint8_t* bitmap;
-    uint8_t bitmap_length;
+    uint8_t* buf;
+    uint8_t buf_len;
 
     Ili9488RamPointer ram_ptr;
 } Ili9488RamWrite;

@@ -4,6 +4,17 @@
 
 #include "ssd1309_commands.h"
 
+/* 3-bit RGB color definitions (R:G:B) */
+
+#define BLACK   0b000  /* R=0, G=0, B=0 */
+#define BLUE    0b001  /* R=0, G=0, B=1 */
+#define GREEN   0b010  /* R=0, G=1, B=0 */
+#define CYAN    0b011  /* R=0, G=1, B=1 */
+#define RED     0b100  /* R=1, G=0, B=0 */
+#define MAGENTA 0b101  /* R=1, G=0, B=1 */
+#define YELLOW  0b110  /* R=1, G=1, B=0 */
+#define WHITE   0b111  /* R=1, G=1, B=1 */
+
 /*
  * @brief the useful ascii symbols and letters in an 8x5 pixel format. the Space character is the first character which is indexed at 0x20 (32 decimal)
  */

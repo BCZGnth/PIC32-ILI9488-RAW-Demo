@@ -406,27 +406,18 @@ size_t ili9488_print(ScreenDefines Screen, Ili9488Print args) {
 }
 
 
-void ili9488_cls(ili9488_interface_t inter);
+void ili9488_cls(Ili9488Defines screen)
 {
     ADD_TO_STACK_DEPTH();
     level_log(TRACE, "Clearing the screen");
 
-    Ili9488RamPointer full_screen = {
-        .start_row = 0,
-        .start_column = 0,
-        .end_row = 319,
-        .end_column = 479
-    };
-
-    ili9488_set_ram_pointer(inter, full_screen);
-
     /* Calculate the most efficient way to clear the screen with the given buffer */
     // Calculate total screen size in bytes (assuming 1 bit per pixel, 8 pixels per byte vertically)
-    unsigned total_screen_bytes = Screen.ScreenWidth * Screen.ScreenHeight / 2;
+    unsigned total_screen_bytes = screen.Screen.ScreenWidth * screen.Screen.ScreenHeight / 2;
 
     // Use the full buffer size for clearing (assuming clear_length is the usable buffer size)
     /* We will also assume that the Screen.buffer_size is greater than 1 */
-    unsigned int clear_length = Screen.buffer_size - (unsigned int)Screen.offset.control;
+    // unsigned int clear_length = Screen.buffer_size;
 
     /* No Error check needed since clear_length will always be less than Screen.buffer_size */
     // if(clear_length > Screen.buffer_size) {
@@ -435,32 +426,43 @@ void ili9488_cls(ili9488_interface_t inter);
     // }
 
     // Calculate the number of full iterations needed
-    unsigned int iterations = total_screen_bytes / clear_length;
-    unsigned int remainder = total_screen_bytes % clear_length;
+    unsigned int iterations = total_screen_bytes / screen.Screen.buffer_size;
+    unsigned int remainder = total_screen_bytes % screen.Screen.buffer_size;
 
     // Log debug information
-    level_log(TRACE, "Clear Length is: %d", clear_length);
-    level_log(TRACE, "Screen Width: %d", Screen.ScreenWidth);
-    level_log(TRACE, "Screen Height: %d", Screen.ScreenHeight);
+    level_log(TRACE, "Clear Length is: %d", screen.Screen.buffer_size);
+    level_log(TRACE, "Screen Width: %d", screen.Screen.ScreenWidth);
+    level_log(TRACE, "Screen Height: %d", screen.Screen.ScreenHeight);
     level_log(TRACE, "Total Screen Bytes: %d", total_screen_bytes);
     level_log(TRACE, "Number of Iterations: %d", iterations);
     level_log(TRACE, "Remainder Bytes: %d", remainder);
     
-    Screen.pbuffer[0] = SSD1309_RAM_WRITE_BYTE; // Assuming control byte is needed at the start
-
     // Initialize the buffer with zeros (clear screen data)
-    memset(Screen.pbuffer + Screen.offset.control, 0, clear_length);
+    memset(screen.Screen.pbuffer, 0, screen.Screen.buffer_size);
+
+    
+    Ili9488RamWrite full_screen = {
+        .ram_ptr = {
+            .start_row = 0,
+            .start_column = 0,
+            .end_row = 319,
+            .end_column = 479
+        },
+        .buf = screen.Screen.pbuffer,
+        .buf_len = screen.Screen.buffer_size
+    };
 
     // Perform full buffer writes
     for (int i = 0; i < iterations; i++) {
-        ssd_write(Screen, Screen.buffer_size);
+        ili9488_ram_write(screen.inter, full_screen);
     }
-
+    
     level_log(TRACE, "Wrote iterations, Now writing remainder");
 
     // Handle any remaining bytes
     if (remainder > 0) {
-        ssd_write(Screen, remainder + Screen.offset.control);
+        full_screen.buf_len = remainder;
+        ili9488_ram_write(screen.inter, full_screen);
      }
 
     level_log(TRACE, "SSD1309: Screen Cleared");
