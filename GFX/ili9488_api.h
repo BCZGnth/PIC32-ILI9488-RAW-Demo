@@ -11,11 +11,11 @@
 
 void   ili9488_write_bitmap(ili9488_interface_t inter, Ili9488WriteBitmap args);
 // void   ili9488_ramWrite(       ScreenDefines Screen, ili9488RamWrite    args);
-size_t ili9488_write_number(ili9488_interface_t inter, Ili9488WriteNumber args);
-void   ili9488_cls(              Ili9488Defines screen, uint8_t * pbuf, size_t buf_len);
+// size_t ili9488_write_number(     Ili9488Defines screen, Ili9488WriteNumber args);
+void   ili9488_cls(              Ili9488Defines screen);
 // void   ili9488_clear_line(     ScreenDefines Screen, Ili9488Clear       args);
 // void   ili9488_clear_word(     ScreenDefines Screen, Ili9488Clear       args);
-size_t ili9488_print(       ili9488_interface_t inter, Ili9488Print       args);
+size_t ili9488_print(            Ili9488Defines screen, Ili9488Print       args);
 // void   ili9488_blinking_cursor(ScreenDefines Screen, Ili9488Cursor      args);
 // void   ili9488_waiting(        ScreenDefines Screen);
 

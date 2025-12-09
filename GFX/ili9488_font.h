@@ -1,8 +1,6 @@
 
-#ifndef _SSD1309_FONT
-#define _SSD1309_FONT
-
-#include "ssd1309_commands.h"
+#ifndef _ILI9488_FONT
+#define _ILI9488_FONT
 
 /* 3-bit RGB color definitions (R:G:B) */
 
@@ -15,9 +13,16 @@
 #define YELLOW  0b110  /* R=1, G=1, B=0 */
 #define WHITE   0b111  /* R=1, G=1, B=1 */
 
+
+/* Define Glyph Buffer Length */
+#define GLYPH_BUFFER_LENGTH 80
+
+
 /*
  * @brief the useful ascii symbols and letters in an 8x5 pixel format. the Space character is the first character which is indexed at 0x20 (32 decimal)
  */
+const uint8_t char_bit_width_1x = 5;
+const uint8_t char_bit_height_1x = 8;
 const uint8_t ascii_font[95][5] = {{0x00, 0x00, 0x00, 0x00, 0x00},  //  space  
                                    {0x00, 0xbf, 0x00, 0x00, 0x00},  //  !  
                                    {0x00, 0x07, 0x00, 0x07, 0x00},  //  " 
@@ -137,5 +142,5 @@ const uint16_t scale_lut[256] = {
     0xFF00, 0xFF03, 0xFF0C, 0xFF0F, 0xFF30, 0xFF33, 0xFF3C, 0xFF3F, 0xFFC0, 0xFFC3, 0xFFCC, 0xFFCF, 0xFFF0, 0xFFF3, 0xFFFC, 0xFFFF
 };
 
-#endif //
+#endif // _ILI9488_FONT
 

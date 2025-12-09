@@ -28,7 +28,7 @@
 // Arguments      : None
 // Return         : None
 // Conditions     : SPI1_RST pin must be correctly connected/configured
-void ili9388_reset(ili9488_interface_t interface)
+void ili9488_reset(ili9488_interface_t interface)
 {
     // Execute hardware reset
     *(interface.lcd_rst_port) &= ~(1 << interface.lcd_rst_pin);

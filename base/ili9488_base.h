@@ -5,7 +5,6 @@
 
 #include "system.h" 
 
-
 /**
  * Interface Structure
  * (This is an SPI Screen)
@@ -328,7 +327,7 @@ typedef struct {
 typedef struct
 {
     unsigned char character;
-    uint8_t *data;     /* Packed 3-bit pixels: 2 pixels per byte */
+    uint8_t * pdata;     /* Packed 3-bit pixels: 2 pixels per byte */
     uint16_t width;
     uint16_t height;
 } Glyph;
