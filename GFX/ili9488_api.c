@@ -44,11 +44,11 @@ size_t load_glyph_3bit(Glyph * c, uint8_t fg, uint8_t bg, FontOffset font_offset
     /* Number of pixels and bytes needed (2 pixels per byte) */
     uint16_t pixel_count = c->width * c->height;
     uint16_t  glyph_byte_count = (pixel_count + (pixel_count % 8) / 8);
-    uint16_t byte_count  = (pixel_count + 1) / 2;
+    uint16_t byte_index = 0;
 
-    if(byte_count > len) {
-        byte_count = len;
-    }
+    // if(byte_count > len) {
+    //     byte_count = len;
+    // }
 
     // Create a static buffer that will hold the glyph while we write it to the screen outside of this function.
 
@@ -63,30 +63,34 @@ size_t load_glyph_3bit(Glyph * c, uint8_t fg, uint8_t bg, FontOffset font_offset
     uint16_t out_pixel = 0;
 
     /**
-     * font_data[index][row] contains one row, MSB = left pixel
-     *  Because the font will be stored horizontally for now, we can make some assumptions in the workings of this function
+     * font_data[index][column (inverted)] contains one column, MSB = left-bottom pixel
+     * 
      */
     for (uint8_t glyph_byte = 0; glyph_byte < glyph_byte_count; glyph_byte++)
     {
         uint8_t glyph_bits = ascii_font[index][glyph_byte];
 
-        for (uint8_t pixel = 0; pixel < 8; pixel++)
+        for (uint8_t pixel = 7; pixel >= 0; pixel++)
         {
             uint8_t bit   = (glyph_bits >> (7 - pixel)) & 1;
             uint8_t color = bit ? fg : bg;
 
-            uint16_t byte_index = out_pixel / 2;
+            byte_index = out_pixel / 2;
+
+            if (byte_index >= len) break;
 
             if ((out_pixel & 1) == 0)
-                c->pdata[byte_index] |= (color & 0x07);
+                c->pdata[byte_index] |= (color & 0x07) << 3; // Pushing the n pixel to bits 5:3  
             else
-                c->pdata[byte_index] |= (color & 0x07) << 3;
-
+                c->pdata[byte_index] |= (color & 0x07);      // Keeping the n + 1 pixel in bits 2:0 
+                                                             // See datasheet section 4.7.2.1 for more information
             out_pixel++;
         }
+
+        if (byte_index >= len) break;
     }
 
-    return byte_count;
+    return byte_index;
 }
 
 
@@ -360,16 +364,20 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         // Calculate the ram_pointer based on offsets:
         char_placement.start_column = args.ram_ptr.start_column + xoff;
         char_placement.start_row    = args.ram_ptr.start_row + yoff;
-        char_placement.end_column   = char_placement.start_column + char_bit_width_1x;
-        char_placement.end_row      = char_placement.start_row + write_height;
+        char_placement.end_column   = char_placement.start_column + char_bit_width_1x  /*- 1 To maintain Zero Indexing */;
+        char_placement.end_row      = char_placement.start_row + write_height  /*- 1 To Maintain Zero Indexing */;
+        printf("Char x = %d, Char y = %d, xoff = %d, yoff = %d", char_placement.start_column, char_placement.start_row, xoff, yoff);
         ili9488_set_ram_pointer(screen.interface, char_placement);
-        
+
         char_attrs.character = msg_char;
 
         /* The write_len variable will always be smaller or equal to the screen.Screen.buffer_size */
-        write_len = load_glyph_3bit(&char_attrs, YELLOW, BLUE, screen.Screen.offset, screen.Screen.pbuffer, screen.Screen.buffer_size);
+        write_len = load_glyph_3bit(&char_attrs, WHITE, BLACK, screen.Screen.offset, screen.Screen.pbuffer, screen.Screen.buffer_size);
         /* but, just in case */
-        write_len = (write_len > screen.Screen.buffer_size) ? screen.Screen.buffer_size : write_len;
+        if (write_len > screen.Screen.buffer_size) {
+            write_len = screen.Screen.buffer_size;
+        }
+
         ili9488_gram_write(screen.interface, screen.Screen.pbuffer, write_len);
         
         /* We may potentially want to make word boundary aware printing...but not today.*/
@@ -380,6 +388,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
 
         msg_letter++;
         msg_char = *(msg_letter);
+        chars_written++;
     }
     
     // Memory addressing mode back to page addressing
@@ -397,7 +406,7 @@ void ili9488_cls(Ili9488Defines screen)
 
     /* Calculate the most efficient way to clear the screen with the given buffer */
     // Calculate total screen size in bytes (assuming 1 bit per pixel, 8 pixels per byte vertically)
-    unsigned total_screen_bytes = screen.Screen.ScreenWidth * screen.Screen.ScreenHeight / 2;
+    uint32_t total_screen_bytes = ((uint32_t)screen.Screen.ScreenWidth) * ((uint32_t)screen.Screen.ScreenHeight) / (uint32_t)2;
 
     // Use the full buffer size for clearing (assuming clear_length is the usable buffer size)
     /* We will also assume that the Screen.buffer_size is greater than 1 */
@@ -410,8 +419,8 @@ void ili9488_cls(Ili9488Defines screen)
     // }
 
     // Calculate the number of full iterations needed
-    unsigned int iterations = total_screen_bytes / screen.Screen.buffer_size;
-    unsigned int remainder = total_screen_bytes % screen.Screen.buffer_size;
+    uint32_t iterations = total_screen_bytes / (uint32_t)screen.Screen.buffer_size;
+    uint32_t remainder = total_screen_bytes % (uint32_t)screen.Screen.buffer_size;
 
     // Log debug information
     level_log(TRACE, "Clear Length is: %d", screen.Screen.buffer_size);
@@ -427,14 +436,16 @@ void ili9488_cls(Ili9488Defines screen)
     
     Ili9488RamPointer full_screen = {
         .start_row = 0,
+        .end_row = screen.Screen.ScreenHeight - 1,
         .start_column = 0,
-        .end_row = screen.Screen.ScreenWidth,
-        .end_column = 479
+        .end_column = screen.Screen.ScreenWidth - 1
     };
+
+    ili9488_set_ram_pointer(screen.interface, full_screen);
 
     // Perform full buffer writes
     ili9488_gram_write(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
-    for (int i = 1; i < iterations; i++) {
+    for (uint32_t i = 1; i < iterations; i++) {
         ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
     }
     
@@ -442,7 +453,7 @@ void ili9488_cls(Ili9488Defines screen)
 
     // Handle any remaining bytes
     if (remainder > 0) {
-        ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, remainder);
+        ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, (size_t)remainder);
      }
 
     level_log(TRACE, "SSD1309: Screen Cleared");

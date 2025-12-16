@@ -5,6 +5,8 @@
 
 #include "system.h" 
 
+#define SOFTWARE_SPI
+// #define HARDWARE_SPI
 /**
  * Interface Structure
  * (This is an SPI Screen)
