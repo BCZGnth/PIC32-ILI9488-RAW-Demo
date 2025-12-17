@@ -7,7 +7,6 @@
 #include "ili9488_font.h"
 // #include "ili9488_driver.h"
 #include "logger.h"
-extern uint8_t some_test_font[475];
 
 /**
  * @brief a function for writing a bitmap to the screen
@@ -31,7 +30,7 @@ extern uint8_t some_test_font[475];
 /**
  * Function loads a static buffer with the screen-ready pixel 
  */
-size_t load_glyph_3bit(char c, uint8_t fg, uint8_t bg, FontOffset font_offset, uint8_t * pbuf, size_t len)
+size_t load_glyph_3bit(char c, color_t fg, color_t bg, FontOffset font_offset, uint8_t * pbuf, size_t len)
 {
     // Calculate the "ord" index of the character
     uint8_t index = (c - font_offset.ascii);
@@ -57,31 +56,33 @@ size_t load_glyph_3bit(char c, uint8_t fg, uint8_t bg, FontOffset font_offset, u
      */
     for (uint8_t glyph_byte = 0; glyph_byte < font_offset.bytes_per_char; glyph_byte++)
     {
-        uint8_t glyph_bits = some_test_font[index * font_offset.bytes_per_char + glyph_byte];
+        uint8_t glyph_bits = ascii_font[index * font_offset.bytes_per_char + glyph_byte];
         printf("\n");
-        for (uint8_t pixel = 7; pixel >= 0; pixel++)
+
+        for (uint8_t pixel = 8; pixel > 0; pixel--)
         {
-            uint8_t bit   = (glyph_bits >> (7 - pixel)) & 1;
+            uint8_t bit   = (glyph_bits >> (8 - pixel)) & 1;
 
             /* Debug */
             if(bit) { printf("1"); } else { printf("0"); }
 
             uint8_t color = bit ? fg : bg;
 
-            byte_index = out_pixel / 2;
-
-            if (byte_index >= len) break;
-
             if ((out_pixel & 1) == 0)
-                *(pbuf + byte_index) |= (color & 0x07) << 3; // Pushing the n pixel to bits 5:3  
+                *(pbuf + byte_index) = (color & 0x07) << 3;     // Pushing the n pixel to bits 5:3  
+                                                                // Set equal to clear the previous data from this byte address.
             else
-                *(pbuf + byte_index) |= (color & 0x07);      // Keeping the n + 1 pixel in bits 2:0 
-                                                             // See datasheet section 4.7.2.1 for more information
-            out_pixel++;
-        }
+                *(pbuf + byte_index) |= (color & 0x07);         // Keeping the n + 1 pixel in bits 2:0 
+                                                            // See datasheet section 4.7.2.1 for more information
 
+            out_pixel++;
+            byte_index = out_pixel / 2;
+            if (byte_index > len) break;
+        }
+        
         if (byte_index >= len) break;
     }
+    printf("\n");
 
     return byte_index;
 }
@@ -101,6 +102,55 @@ void ili9488_ram_write(ili9488_interface_t inter, Ili9488RamWrite args) {
 
     // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers.)
     ili9488_gram_write(inter, args.buf, args.buf_len);
+}
+
+
+void ili9488_fill_color(Ili9488Defines screen, Ili9488FillBlock args)
+{
+    ADD_TO_STACK_DEPTH();
+    level_log(TRACE, "Filling a block");
+
+    color_t color = 0;
+    color |= (args.color & 0x7);
+    color = color << 3;
+    color |= (args.color & 0x7);
+
+    uint24_t block_height = args.ram_ptr.end_y - args.ram_ptr.start_y + 1;
+    uint24_t block_width = args.ram_ptr.end_x - args.ram_ptr.start_x + 1; 
+    uint24_t total_block_bytes = block_height * block_width;
+
+    // Calculate the number of full iterations needed
+    uint24_t iterations = total_block_bytes / (uint24_t)screen.Screen.buffer_size;
+    uint24_t remainder = total_block_bytes % (uint24_t)screen.Screen.buffer_size;
+
+    // Log debug information
+    level_log(TRACE, "Fill length is: %d", screen.Screen.buffer_size);
+    level_log(TRACE, "Block Width: %d", block_width);
+    level_log(TRACE, "Block Height: %d", block_height);
+    level_log(TRACE, "Total Block Bytes: %d", total_block_bytes);
+    level_log(TRACE, "Number of Iterations: %d", iterations);
+    level_log(TRACE, "Remainder Bytes: %d", remainder);
+    
+    // Initialize the buffer with zeros (clear screen data)
+    memset(screen.Screen.pbuffer, color, screen.Screen.buffer_size);
+
+    ili9488_set_ram_pointer(screen.interface, args.ram_ptr);
+
+    // Perform full buffer writes
+    ili9488_gram_write(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
+    for (uint24_t i = 1; i < iterations; i++) {
+        ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
+    }
+    
+    level_log(TRACE, "Wrote iterations, Now writing remainder");
+
+    // Handle any remaining bytes
+    if (remainder > 0) {
+        ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, (size_t)remainder);
+     }
+
+    level_log(TRACE, "ILI9488: Block Filled");
+    REMOVE_FROM_STACK_DEPTH();
 }
 
 /**
@@ -260,16 +310,21 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     ADD_TO_STACK_DEPTH(); // ili9488_print    
     level_log(TRACE, "Printing: \"%s\"", args.text);
 
+    Ili9488FillBlock background = {
+        .color = args.bg,
+        .ram_ptr = args.ram_ptr
+    };
+    ili9488_fill_color(screen, background);
     // uint16_t tmp16; // A variable to hold the 16 bit value of a scaled byte
     // uint8_t tmp[2]; // tmp16 will get split into these two bytes to get the right endianness when sending the data over the i2c bus.
     uint8_t preserve_frame = 0;
-    uint16_t box_width = args.ram_ptr.end_column - args.ram_ptr.start_column;
-    uint16_t box_height = args.ram_ptr.end_row - args.ram_ptr.start_row;
+    uint16_t box_width = args.ram_ptr.end_x - args.ram_ptr.start_x;
+    uint16_t box_height = args.ram_ptr.end_y - args.ram_ptr.start_y;
     uint16_t xoff;
     uint16_t yoff;
     uint8_t write_height = char_bit_height_1x;
     size_t write_len;
-    uint8_t char_pad = 2;
+    uint8_t char_pad = 1;
     size_t chars_written = 0;
     uint16_t row_increment = 0;
 
@@ -355,22 +410,22 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         }
 
         // Calculate the ram_pointer based on offsets:
-        char_placement.start_column = args.ram_ptr.start_column + xoff;
-        char_placement.start_row    = args.ram_ptr.start_row + yoff;
-        char_placement.end_column   = char_placement.start_column + char_bit_width_1x  /*- 1 To maintain Zero Indexing */;
-        char_placement.end_row      = char_placement.start_row + write_height  /*- 1 To Maintain Zero Indexing */;
-        printf("Char x = %d, Char y = %d, xoff = %d, yoff = %d", char_placement.start_column, char_placement.start_row, xoff, yoff);
+        char_placement.start_x = args.ram_ptr.start_x + xoff;
+        char_placement.start_y    = args.ram_ptr.start_y + yoff;
+        char_placement.end_x   = char_placement.start_x + char_bit_width_1x - 1  /*- 1 To maintain Zero Indexing */;
+        char_placement.end_y      = char_placement.start_y + write_height - 1 /*- 1 To Maintain Zero Indexing */;
+        printf("Char x = %d, Char y = %d, xoff = %d, yoff = %d", char_placement.start_x, char_placement.start_y, xoff, yoff);
         ili9488_set_ram_pointer(screen.interface, char_placement);
 
         // char_attrs.character = msg_char;
 
         /* The write_len variable will always be smaller or equal to the screen.Screen.buffer_size */
-        write_len = load_glyph_3bit(msg_char, WHITE, BLACK, screen.Screen.offset, screen.Screen.pbuffer, screen.Screen.buffer_size);
+        write_len = load_glyph_3bit(msg_char, args.fg, args.bg, screen.Screen.offset, screen.Screen.pbuffer, screen.Screen.buffer_size);
         /* but, just in case */
         if (write_len > screen.Screen.buffer_size) {
             write_len = screen.Screen.buffer_size;
         }
-
+        level_log(TRACE, "Write Length is: %d", write_len);
         ili9488_gram_write(screen.interface, screen.Screen.pbuffer, write_len);
         
         /* We may potentially want to make word boundary aware printing...but not today.*/
@@ -430,10 +485,10 @@ void ili9488_cls(Ili9488Defines screen)
 
     
     Ili9488RamPointer full_screen = {
-        .start_row = 0,
-        .end_row = screen.Screen.ScreenHeight - 1,
-        .start_column = 0,
-        .end_column = screen.Screen.ScreenWidth - 1
+        .start_y = 0,
+        .end_y = screen.Screen.ScreenHeight - 1,
+        .start_x = 0,
+        .end_x = screen.Screen.ScreenWidth - 1
     };
 
     ili9488_set_ram_pointer(screen.interface, full_screen);

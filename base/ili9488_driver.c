@@ -65,10 +65,10 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
             .ScreenHeight = 320,
             .ScreenWidth = 480,
             .zeroed_ram_ptr = {
-                .start_column = 0,
-                .start_row = 0,
-                .end_column = 479,
-                .end_row = 319,
+                .start_x = 0,
+                .start_y = 0,
+                .end_x = 479,
+                .end_y = 319,
             }
         },
         .interface = interface

@@ -5,6 +5,8 @@
 
 #include "system.h" 
 
+typedef unsigned char color_t;
+
 #define SOFTWARE_SPI
 // #define HARDWARE_SPI
 /**
@@ -42,13 +44,15 @@ typedef struct unusedCommandLengths{
     uint8_t send_command;
     uint8_t startup;
     uint8_t init;
+
 } Ili9488CommandLengths;
 
 typedef struct CursorPointer{
-    uint16_t start_row;
-    uint16_t start_column;
-    uint16_t end_row;
-    uint16_t end_column;
+    uint16_t start_y;
+    uint16_t start_x;
+    uint16_t end_y;
+    uint16_t end_x;
+
 } Ili9488RamPointer;
 
 /* 
@@ -89,6 +93,8 @@ typedef struct Print{
     uint8_t      length;
     uint8_t      delay;
     uint8_t      scale;
+    color_t      fg;
+    color_t      bg;
 
     Ili9488RamPointer ram_ptr;
 } Ili9488Print;
@@ -126,11 +132,11 @@ typedef struct RamWrite{
     Ili9488RamPointer ram_ptr;
 } Ili9488RamWrite;
 
-typedef struct ClearLines{
+typedef struct FillBlock{
+    color_t color;
+
     Ili9488RamPointer ram_ptr;
-    uint8_t start_page;
-    uint8_t end_page; 
-} Ili9488Clear;
+} Ili9488FillBlock;
 
 typedef struct WaitAnimate{
     Ili9488RamPointer ram_ptr;

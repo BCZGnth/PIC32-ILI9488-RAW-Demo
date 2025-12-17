@@ -193,16 +193,16 @@ void ili9488_read_data(ili9488_interface_t interface, uint8_t* data_from_screen,
  */
 void ili9488_set_ram_pointer(ili9488_interface_t inter, Ili9488RamPointer args) 
 {
-    uint8_t start_msb = (args.start_row >> 8) & 0xff;
-    uint8_t start_lsb = (args.start_row & 0xff);
-    uint8_t end_msb   = (args.end_row >> 8) & 0xff;
-    uint8_t end_lsb   = (args.end_row & 0xff);
+    uint8_t start_msb = (args.start_y >> 8) & 0xff;
+    uint8_t start_lsb = (args.start_y & 0xff);
+    uint8_t end_msb   = (args.end_y >> 8) & 0xff;
+    uint8_t end_lsb   = (args.end_y & 0xff);
     ili9488_send_command(inter, ILI9488_COLUMN_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
 
-    start_msb = (args.start_column >> 8) & 0xff;
-    start_lsb = (args.start_column & 0xff);
-    end_msb   = (args.end_column >> 8) & 0xff;
-    end_lsb   = (args.end_column & 0xff);
+    start_msb = (args.start_x >> 8) & 0xff;
+    start_lsb = (args.start_x & 0xff);
+    end_msb   = (args.end_x >> 8) & 0xff;
+    end_lsb   = (args.end_x & 0xff);
     ili9488_send_command(inter, ILI9488_PAGE_ADDRESS_SET, start_msb, start_lsb, end_msb, end_lsb);
 }
 
