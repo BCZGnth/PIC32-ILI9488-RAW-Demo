@@ -204,7 +204,9 @@ typedef struct ScreenMetaData{
     Ili9488RamPointer zeroed_ram_ptr;
     // Ili9488Wait* pwait;
 
-    FontOffset offset;
+    FontOffset offset_1x;
+    FontOffset offset_2x;
+
     CharAttributes character;
 } ScreenDefines;
 

@@ -55,12 +55,19 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
                 .pad = 2,
                 .width_pad = 12
             },
-            .offset = {
+            .offset_1x = {
                 .ascii = 32, // We only have the characters from 32 to 127. Thus the offset is 32
-                .pfont = &(ascii_font[0]),
-                .height = 8,
-                .width = 5,
+                .pfont = &(ascii_font_1x[0]),
+                .height = char_bit_height_1x,
+                .width = char_bit_width_1x,
                 .bytes_per_char = 5
+            },
+            .offset_2x = {
+                .ascii = 32, // We only have the characters from 32 to 127. Thus the offset is 32
+                .pfont = &(ascii_font_2x[0]),
+                .height = char_bit_height_2x,
+                .width = char_bit_width_2x,
+                .bytes_per_char = 20
             },
             .ScreenHeight = 320,
             .ScreenWidth = 480,
