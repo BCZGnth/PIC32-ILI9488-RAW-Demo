@@ -80,16 +80,19 @@ typedef struct CursorPointer{
  */
 
 typedef struct WriteNumber{
-    uint32_t data;
+    int32_t data;
     uint8_t constrained_length; // make a maximum number of characters that can be printed. (neede to right align the characters.)
     // uint8_t right_align;
     uint8_t scale;
 
     Ili9488RamPointer ram_ptr;
+
+    color_t fg;
+
 } Ili9488WriteNumber;
 
 typedef struct Print{
-    const char * text;
+    char *       text;
     uint8_t      length;
     uint8_t      delay;
     uint8_t      scale;
@@ -147,6 +150,8 @@ typedef struct HVLine{
     uint8_t xstart;
     uint8_t ystart;
     uint8_t length;
+    color_t color;
+    uint8_t weight;
 } Ili9488HVLine;
 
 typedef struct Rect{
@@ -154,6 +159,8 @@ typedef struct Rect{
     uint8_t ystart;
     uint8_t xend;
     uint8_t yend;
+    uint8_t weight;
+    color_t color;
 } Ili9488Rect;
 
 
@@ -168,6 +175,7 @@ typedef struct Font_ByteOffset{
 
     uint8_t height;
     uint8_t width;
+    uint8_t width_pad;
 
     uint8_t bytes_per_char;
     // uint8_t control;

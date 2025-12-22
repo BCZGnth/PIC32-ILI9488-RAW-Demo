@@ -60,6 +60,7 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
                 .pfont = &(ascii_font_1x[0]),
                 .height = char_bit_height_1x,
                 .width = char_bit_width_1x,
+                .width_pad = char_bit_width_1x + 1,
                 .bytes_per_char = 5
             },
             .offset_2x = {
@@ -67,6 +68,7 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
                 .pfont = &(ascii_font_2x[0]),
                 .height = char_bit_height_2x,
                 .width = char_bit_width_2x,
+                .width_pad = char_bit_width_2x + 2,
                 .bytes_per_char = 20
             },
             .ScreenHeight = 320,

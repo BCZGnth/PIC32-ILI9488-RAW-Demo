@@ -42,16 +42,12 @@ size_t load_glyph_3bit(char c, color_t fg, color_t bg, FontOffset font_offset, u
 
     // Calculate the "ord" index of the character
     uint8_t index = (c - font_offset.ascii);
-    printf("loading character: \"%c\" with index %d\n", c, index);
 
     /* Number of pixels and bytes needed (2 pixels per byte) */
     uint16_t pixel_count = font_offset.height * font_offset.width;
     uint16_t byte_index = 0;
 
     // Create a static buffer that will hold the glyph while we write it to the screen outside of this function.
-
-    /* Potential for memory corruption here... */
-    // memset(c->pdata, 0, GLYPH_BUFFER_LENGTH);
 
     fg &= 0x07;  /* keep only 3 bits */
     bg &= 0x07;
@@ -61,18 +57,15 @@ size_t load_glyph_3bit(char c, color_t fg, color_t bg, FontOffset font_offset, u
     /**
      * font_data[index][column (inverted)] contains one column, MSB = left-bottom pixel
      * 
+     * Iterate through the bytes of the character bitmap (column-major) and load each bit into the character buffer provided.
      */
     for (uint8_t glyph_byte = 0; glyph_byte < font_offset.bytes_per_char; glyph_byte++)
     {
         uint8_t glyph_bits = *( font_offset.pfont + (index * font_offset.bytes_per_char + glyph_byte) );
-        printf("\n");
 
         for (uint8_t pixel = 8; pixel > 0; pixel--)
         {
             uint8_t bit   = (glyph_bits >> (8 - pixel)) & 1;
-
-            /* Debug */
-            if(bit) { printf("1"); } else { printf("0"); }
 
             uint8_t color = bit ? fg : bg;
 
@@ -81,7 +74,7 @@ size_t load_glyph_3bit(char c, color_t fg, color_t bg, FontOffset font_offset, u
                                                                 // Set equal to clear the previous data from this byte address.
             else
                 *(pbuf + byte_index) |= (color & 0x07);         // Keeping the n + 1 pixel in bits 2:0 
-                                                            // See datasheet section 4.7.2.1 for more information
+                                                                // See datasheet section 4.7.2.1 for more information
 
             out_pixel++;
             byte_index = out_pixel / 2;
@@ -90,9 +83,6 @@ size_t load_glyph_3bit(char c, color_t fg, color_t bg, FontOffset font_offset, u
         
         if (byte_index >= len) break;
     }
-
-
-    printf("\n");
 
     return byte_index;
 }
@@ -217,96 +207,71 @@ print at one time.
  *      This is only possible because the i2c buffer is loaded with zeros before any data gets written to it.
  *
  */
-// size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
+size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
 
-//     ADD_TO_STACK_DEPTH(); // ili9488_write_number
-//     level_log(TRACE, "Writing Number: %d", args.data);
+    ADD_TO_STACK_DEPTH(); // ili9488_write_number
+    level_log(TRACE, "Writing Number: %d", args.data);
 
-//     /** 
-//      * Don't be fooled by the term "constrained length" This is just a parameter that is used to right align the text since the buffer gets written left to right. 
-//      */
+    /** 
+     * Don't be fooled by the term "constrained length" This is just a parameter that is used to right align the text since the buffer gets written left to right. 
+     */
 
-//     uint8_t write_length = (args.constrained_length * screen.Screen.character.width_pad);
-//     if(screen.Screen.buffer_size < write_length) {
-//         level_log(ERROR, "Buffer Size Too Small");
-//         return 0;
-//     }
-
-//     ili9488_set_ram_pointer(screen.interface, args.ram_ptr);
-
-//     uint8_t n;
-//     uint8_t number_of_chars_written; // the snprintf function actually returns an integer value, but I hope that the amount of characters will never exceed 256...
-//     unsigned char data_to_write[36]; // Don't really need to display numbers that are more than 6 digits long. 6 * 6 = 36
+    #define MAX_NUMBER_OF_CHARS 10
+    uint8_t n, number_of_chars_written; // the snprintf function actually returns an integer value, but I hope that the amount of characters will never exceed 255...
+    unsigned char data_to_write[MAX_NUMBER_OF_CHARS]; // Don't really need to display numbers that are longer than 24 characters
+    FontOffset write_num_off = screen.Screen.offset_2x;
+    // ili9488_set_ram_pointer(screen.interface, args.ram_ptr);
     
-//     #ifndef USE_STATIC_BUFFERS
-//     if (data_to_write == NULL)
-//     {
-//         level_log(ERROR, "SSD1309: Memory allocation failed for data_to_write");
-//         return 0;
-//     }
-//     #endif // USE_STATIC_BUFFERS
+    // Hopefully won't ever need this...
+    #ifndef USE_STATIC_BUFFERS
+    if (data_to_write == NULL)
+    {
+        level_log(ERROR, "SSD1309: Memory allocation failed for data_to_write");
+        return 0;
+    }
+    #endif // USE_STATIC_BUFFERS
 
-//     number_of_chars_written = snprintf(&data_to_write[0], args.constrained_length, "%u", args.data); // putting zeros at the end of the string so that it is less noise to the viewer
-//     if(number_of_chars_written <= 0) {
-//         level_log(ERROR, "snprintf call did not write data to a buffer. Possibly you have a bad args.data");
-//     }
-//     uint8_t right_align_character_offset = (args.constrained_length - number_of_chars_written) * 6;
-//     if(args.constrained_length < number_of_chars_written) {
-//         level_log(WARNING, "constrained length smaller than chars written. Setting Right align character offset to ZERO to eliminate memory corruption possibilities");
-//         right_align_character_offset = 0;
-//     }
-//     level_log(TRACE, "Right-align offset is %d", right_align_character_offset);
+    /**
+     * Load the data_to_write buffer with the character from our variable
+     * Use snprintf because it allows overwrite protection that always ends in a null terminator
+     */
+    number_of_chars_written = snprintf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%d", args.data); // putting zeros at the end of the string so that it is less noise to the viewer
+    if(number_of_chars_written <= 0) {
+        level_log(ERROR, "snprintf call did not write data to a buffer. Possibly you have a bad args.data");
+    }
 
-//     /* Loading all Zeros into the I2C buffer */
-//     memset(Screen.pbuffer, 0, write_length);
+    uint8_t right_align_pixel_offset = (args.constrained_length - number_of_chars_written) * write_num_off.width_pad;
+    if(args.constrained_length < number_of_chars_written) {
+        level_log(WARNING, "constrained length smaller than chars written. Setting Right align character offset to ZERO to eliminate memory corruption possibilities");
+        right_align_pixel_offset = 0;
+    }
+    level_log(TRACE, "Right-align offset is %d", right_align_pixel_offset);
 
-//     memcpy(Screen.pbuffer, (&SSD1309_RAM_WRITE_BYTE), Screen.offset.control);
+    /**
+     * The constraint should just be 10 chars since that is the max. This makes the code easier for the user, but potentiall harder here
+     * 1) the code needs to determine if the ram pointer passed is acceptable or not. (does the ram pointer enable the printing of the correct amount of chars?)
+     *          This will be handled by only printing a hyphen if the pointer can not be reconciled. 
+     * 2) The code needs to determine what the appropriate start index will be if the ram pointer is deemed acceptable, and set the start_x argument of the args.ram_pointer
+     * 3) send the string and its ram_pointer to the print function.
+     */
+    Ili9488Print num_to_print = {
+        .text    = &data_to_write[0],
+        .fg      = args.fg,
+        .ram_ptr = args.ram_ptr
+    };
 
-//     level_log(TRACE, "Loading the I2C buffer with %d numeric characters", number_of_chars_written);
-//     for (n = 0; n < number_of_chars_written; n++)
-//     { // Iterate through all of the characters in the string
+    if( num_to_print.ram_ptr.start_x + right_align_pixel_offset > write_num_off.width_pad) {
+        num_to_print.ram_ptr.start_x += right_align_pixel_offset;
+    }
 
-//         /** Write 5 bytes from a (calculated pointer to a character in the font) to the i2c buffer */
+    ili9488_print(screen, num_to_print);
 
-//         /**      The pointer to the destination buffer is calculated by:
-//          *
-//          *          Adding 1 to the pointer to the i2c buffer (don't overwrite the SSD1309_RAM_WRITE_BYTE)
-//          *          Adding (n * 6) to the pointer to the i2c buffer. The multiplier 6 is used because the characters are 5 bytes long and a pad byte is added in between each character
-//          *          Adding the right_aligh_character_offset to align the characters on the right side
-//          *
-//          *      The source pointer is calculated by:
-//          *
-//          *          Subtracting 32 from the character pointer stored in data_to_write[n] (the local font does not include the first 32 ascii characters)
-//          *          Multiplying that number by 5 (because each character takes up 5 bytes)
-//          *          Adding that number to a pointer to the font (to point to the correct character in the font array)
-//          *
-//          *      The length of data to copy is 5 because each character is 5 bytes long.
-//          *      the pointer buffer is incremented by 6 in order to put a column of space in between each character
-//          *      This is only possible because the i2c buffer is loaded with zeros before any data gets written to it.
-//          */
-//         if(n * Screen.character.width_pad > Screen.buffer_size) {
-//             level_log(WARNING, "Can not load any more characters into buffer on iteration %d", n);
-//             break;
-//         }
-//         memcpy((Screen.pbuffer + (n * Screen.character.width_pad) + Screen.offset.control + right_align_character_offset), (((data_to_write[n] - Screen.offset.ascii) * Screen.character.width) + Screen.offset.pfont), Screen.character.width);
-//     }
 
-//     ssd_write(Screen, write_length); // The number of bytes to write to the i2c buffer is the number of characters multiplied by the width of each character (5) plus the padding (1 byte) between each character
+    level_log(TRACE, "ILI9488: Done Writing Number");
+    REMOVE_FROM_STACK_DEPTH(); // ili9488_write_number
 
-//     // Memory addressing mode back to page addressing
-//     ILI9488_SendCommand(Screen, SET_MEMORY_ADDRESSING_MODE, PAGE_ADDRESSING);
-
-//     // Set the column range back to its reset value
-//     ILI9488_SendCommand(Screen, SET_COLUMN_ADDRESS, 0x0, 0xFF);
-
-//     // Set the page range back to its reset value
-//     ILI9488_SendCommand(Screen, SET_PAGE_ADDRESS, 0x0, 0x7);
-
-//     level_log(TRACE, "SSD1309: Done Writing Number");
-//     REMOVE_FROM_STACK_DEPTH(); // ili9488_write_number
-
-//     return args.constrained_length * 6;
-// }
+    return args.constrained_length * 6;
+}
 
 
 /**
@@ -339,7 +304,9 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     uint8_t write_width = char_bit_width_2x + 1; // adding one to artificially make the box bigger by one more column so that the mystery 8 bits before the ram pointer are dissolved
     uint8_t write_height = char_bit_height_2x;
     size_t write_len;
+    bool last_line_flag = false;
     uint8_t char_pad = 1;
+    uint8_t char_height = char_bit_height_2x;
     size_t chars_written = 0;
     uint16_t row_increment = 0;
 
@@ -415,18 +382,22 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
             // Reset xoff and intcrement row counter
             xoff = 0;
             row_increment += 1;
+
+            /* Break prematurely if the ram pointer box has been filled. */
+            // if(last_line_flag) break;
         }
-        yoff = (write_height * row_increment);
-        if(yoff + write_height > box_height) {
-            if ((yoff + (write_height * 2)) > box_height) {
-                break;
-            }
-            else if (write_height == box_height - yoff - 1) {
-                break;
-            }
+        yoff = (char_height * row_increment);
+        if(yoff + char_height > box_height) {
+            // if ((yoff + (write_height * 2)) > box_height) {
+            //     break;
+            // }
+            // else if (write_height == box_height - yoff - 1) {
+            //     break;
+            // }
             // Constrain char_height to only go to the bottom of the box
             // The unfortunate problem with this solution is that it does not allow for the correct pixels to be written at the correct places in the smaller box
             write_height = (uint8_t)(box_height - yoff - 1); // - 1  For turning the 1 indexed number into a zero indexed number 
+            last_line_flag = true;
         }
 
         // Calculate the ram_pointer based on offsets:
