@@ -1,6 +1,8 @@
 #ifndef _ILI9488_BASE
 #define _ILI9488_BASE
 
+#define _ILI9488
+
 #include <stdint.h>
 
 #include "system.h" 
