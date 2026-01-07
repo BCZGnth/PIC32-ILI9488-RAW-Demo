@@ -25,7 +25,7 @@ void ili9488_send_command(uint16_t len_cmd, ...)
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     CS1_SetLow();
     // Set command mode (DC pin is command when LOW and data when HIGH)
-    *(interface.spi_dc_port) &= ~(1 << interface.spi_dc_pin);
+    DC1_SetLow();
     
     // Ignore reception with void cast
     #ifdef HARDWARE_SPI
@@ -97,7 +97,7 @@ void ili9488_send_data(uint8_t* pdata, size_t data_length)
     #endif
 
     // Deselect Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
-    *(interface.spi_cs_port) |= ~(1 << interface.spi_cs_pin);
+    CS1_SetHigh();
 
 }
 
@@ -140,7 +140,7 @@ void ili9488_send_byte(uint8_t data)
 //
 // Return         : None (internal process handles reception if needed)
 // Conditions     : SPI1/MSSP and ILI9488 initialization must be completed
-void ili9488_transfer_datauint8_t* tx_data, uint8_t* rx_data, size_t len)
+void ili9488_transfer_data(uint8_t* tx_data, uint8_t* rx_data, size_t len)
 {
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf

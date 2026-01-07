@@ -96,12 +96,12 @@ size_t load_glyph_3bit(char c, color_t fg, color_t bg, FontOffset font_offset, u
  * @param y_start defines the TOP-most bit (pixel) or 8-bit page (if in page addressing mode)
  * @param y_end Not Implemented. For advanced box defining that will come in handy when writing text to the screen
  */
-void ili9488_ram_write(ili9488_interface_t inter, Ili9488RamWrite args) {
+void ili9488_ram_write(Ili9488RamWrite args) {
     /** Set RAM pointer constraints based on x and y values given */
-    ili9488_set_ram_pointer(inter, args.ram_ptr);
+    ili9488_set_ram_pointer(args.ram_ptr);
 
     // NOTE: This is a vertical Ram Write (due to madctl and madctr and some other registers.)
-    ili9488_gram_write(inter, args.buf, args.buf_len);
+    ili9488_gram_write(args.buf, args.buf_len);
 }
 
 
@@ -134,19 +134,19 @@ void ili9488_fill_color(Ili9488Defines screen, Ili9488FillBlock args)
     // Initialize the buffer with zeros (clear screen data)
     memset(screen.Screen.pbuffer, color, screen.Screen.buffer_size);
 
-    ili9488_set_ram_pointer(screen.interface, args.ram_ptr);
+    ili9488_set_ram_pointer(args.ram_ptr);
 
     // Perform full buffer writes
-    ili9488_gram_write(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
+    ili9488_gram_write(screen.Screen.pbuffer, screen.Screen.buffer_size);
     for (uint24_t i = 1; i < iterations; i++) {
-        ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
+        ili9488_gram_write_continue(screen.Screen.pbuffer, screen.Screen.buffer_size);
     }
     
     level_log(TRACE, "Wrote iterations, Now writing remainder");
 
     // Handle any remaining bytes
     if (remainder > 0) {
-        ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, (size_t)remainder);
+        ili9488_gram_write_continue(screen.Screen.pbuffer, (size_t)remainder);
      }
 
     level_log(TRACE, "ILI9488: Block Filled");
@@ -257,7 +257,9 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
     Ili9488Print num_to_print = {
         .text    = &data_to_write[0],
         .fg      = args.fg,
-        .ram_ptr = args.ram_ptr
+        .ram_ptr = args.ram_ptr,
+        .line_spacing = 0,
+        .font = args.font,
     };
 
     if( num_to_print.ram_ptr.start_x + right_align_pixel_offset > write_num_off.width_pad) {
@@ -301,12 +303,12 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     uint16_t box_height = args.ram_ptr.end_y - args.ram_ptr.start_y + 1;
     uint16_t xoff = 0;
     uint16_t yoff = 0;
-    uint8_t write_width = char_bit_width_2x + 1; // adding one to artificially make the box bigger by one more column so that the mystery 8 bits before the ram pointer are dissolved
-    uint8_t write_height = char_bit_height_2x;
+    uint8_t write_width = args.font.width + 1; // adding one to artificially make the box bigger by one more column so that the mystery 8 bits before the ram pointer are dissolved
+    uint8_t write_height = args.font.height;
     size_t write_len = 0;
     bool last_line_flag = false;
     uint8_t char_pad = 1;
-    uint8_t char_height = char_bit_height_2x;
+    uint8_t char_height = args.font.height + args.line_spacing;
     size_t chars_written = 0;
     uint16_t row_increment = 0;
 
@@ -425,7 +427,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
             msg_char = *(msg_letter);
         }
 
-        yoff = ((char_height + char_pad) * row_increment);
+        yoff = (char_height * row_increment);
         if(yoff + char_height >= box_height) {
             // if ((yoff + (write_height * 2)) > box_height) {
             //     break;
@@ -436,7 +438,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
             // Constrain char_height to only go to the bottom of the box
             // The unfortunate problem with this solution is that it does not allow for the correct pixels to be written at the correct places in the smaller box
             
-            /* We are just going to break here instead of trying to display gibbborish on the screen it makes more sense this way */
+            /* We are just going to break here instead of trying to display gibborish on the screen it makes more sense this way */
             break;
             
             write_height = (uint8_t)(box_height - yoff);
@@ -449,18 +451,18 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
         char_placement.end_x   = char_placement.start_x + write_width - 1  /*- 1 To maintain Zero Indexing */;
         char_placement.end_y      = char_placement.start_y + write_height - 1 /*- 1 To Maintain Zero Indexing */;
         printf("Char x = %d, Char y = %d, xoff = %d, yoff = %d", char_placement.start_x, char_placement.start_y, xoff, yoff);
-        ili9488_set_ram_pointer(screen.interface, char_placement);
+        ili9488_set_ram_pointer(char_placement);
 
         // char_attrs.character = msg_char;
 
         /* The write_len variable will always be smaller or equal to the screen.Screen.buffer_size */
-        write_len = load_glyph_3bit(msg_char, args.fg, args.bg, screen.Screen.offset_2x, screen.Screen.pbuffer, screen.Screen.buffer_size);
+        write_len = load_glyph_3bit(msg_char, args.fg, args.bg, args.font, screen.Screen.pbuffer, screen.Screen.buffer_size);
         /* but, just in case */
         if (write_len > screen.Screen.buffer_size) {
             write_len = screen.Screen.buffer_size;
         }
         // level_log(TRACE, "Write Length is: %d", write_len);
-        ili9488_gram_write(screen.interface, screen.Screen.pbuffer, write_len);
+        ili9488_gram_write(screen.Screen.pbuffer, write_len);
         
         /* We may potentially want to make word boundary aware printing...but not today.*/
         // for (unsigned char * word_letter = msg_letter; word_letter != '\0'; word_letter++) 
@@ -479,7 +481,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
 
     level_log(TRACE, "Print: Done Printing.");
     REMOVE_FROM_STACK_DEPTH(); // ili9488_print
-    return (args.length * screen.Screen.character.width_pad);
+    return (chars_written * screen.Screen.character.width_pad);
 }
 
 
@@ -525,19 +527,19 @@ void ili9488_cls(Ili9488Defines screen)
         .end_x = screen.Screen.ScreenWidth - 1
     };
 
-    ili9488_set_ram_pointer(screen.interface, full_screen);
+    ili9488_set_ram_pointer(full_screen);
 
     // Perform full buffer writes
-    ili9488_gram_write(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
+    ili9488_gram_write(screen.Screen.pbuffer, screen.Screen.buffer_size);
     for (uint32_t i = 1; i < iterations; i++) {
-        ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
+        ili9488_gram_write_continue(screen.Screen.pbuffer, screen.Screen.buffer_size);
     }
     
     level_log(TRACE, "Wrote iterations, Now writing remainder");
 
     // Handle any remaining bytes
     if (remainder > 0) {
-        ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, (size_t)remainder);
+        ili9488_gram_write_continue(screen.Screen.pbuffer, (size_t)remainder);
      }
 
     level_log(TRACE, "Ili9488: Screen Cleared");

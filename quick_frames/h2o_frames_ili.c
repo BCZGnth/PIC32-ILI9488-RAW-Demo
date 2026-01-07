@@ -65,15 +65,12 @@ void h2o_outline(Ili9488Defines screen) {
 
     Ili9488Print h2o_connected = {
         .text = "H2O Disconnected",
-        .length = 16,
         .ram_ptr = {
             .start_x = (screen.Screen.ScreenWidth - 204) / 2,
             .end_x = (screen.Screen.ScreenWidth - 204) / 2 + 204,
             .start_y = (screen.Screen.ScreenHeight / 4),
             .end_y = (screen.Screen.ScreenHeight / 4) + screen.Screen.offset_2x.height
         },
-        .scale = 1,
-        .delay = 1,
         .fg = YELLOW
     };
 
@@ -94,16 +91,17 @@ void generic_payload_frame(Ili9488Defines screen, uint32_t serial_number)
 {
     Ili9488Print ser_num = {
         .text = "SER_NUM = ",
-        .length = 6,
         .ram_ptr = {
             .start_x = (screen.Screen.ScreenWidth - (20 * screen.Screen.offset_2x.width_pad)) / 2,
             .end_x =  ((screen.Screen.ScreenWidth - (20 * screen.Screen.offset_2x.width_pad)) / 2) + 10 * screen.Screen.offset_2x.width_pad,
-            .start_y = 6,
-            .end_y = 6 + screen.Screen.character.height
+            .start_y = 4,
+            .end_y = 4 + screen.Screen.character.height
         },
         // .scale = 1,
         // .delay = 0
-        .fg = GREEN 
+        .line_spacing = 0,
+        .fg = BLUE, 
+        .font = screen.Screen.offset_2x,
     };
 
     /* Print Serial number */
@@ -117,7 +115,8 @@ void generic_payload_frame(Ili9488Defines screen, uint32_t serial_number)
             .end_y = 6 + screen.Screen.character.height
         },
         // .scale = 1,
-        .fg = CYAN
+        .fg = RED,
+        .font = screen.Screen.offset_2x
     };
 
     ili9488_print(       screen, ser_num);
@@ -137,15 +136,12 @@ void pretty_payload_frame(Ili9488Defines screen, uint32_t serial_number)
 
     Ili9488Print SerNUM = {
         .text = "Ser #:",
-        .length = 6,
         .ram_ptr = {
             .start_x = 0,
             .start_y = 0,
             .end_x = 0,
             .end_y = 0
         },
-        .scale = 1,
-        .delay = 0
     };
 
     Ili9488HVLine ser_num_underline = {

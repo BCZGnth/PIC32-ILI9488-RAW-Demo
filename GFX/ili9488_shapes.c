@@ -51,27 +51,27 @@ void ili9488_draw_vline(Ili9488Defines screen, Ili9488HVLine Line)
     level_log(TRACE, "Number of Bytes: %d", no_of_bytes);
     level_log(TRACE, "Byte of Color: %d", byte_of_color);
 
-    ili9488_set_ram_pointer(screen.interface, line_ptr);
+    ili9488_set_ram_pointer(line_ptr);
 
     // Only memset as many bytes as needed. 
     if(!iterations) {
         memset(screen.Screen.pbuffer, byte_of_color, remainder);
-        ili9488_gram_write(screen.interface, screen.Screen.pbuffer, remainder + 1);
+        ili9488_gram_write(screen.Screen.pbuffer, remainder + 1);
 
     } else {
         memset(screen.Screen.pbuffer, byte_of_color, screen.Screen.buffer_size);
         
-        ili9488_gram_write(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
+        ili9488_gram_write(screen.Screen.pbuffer, screen.Screen.buffer_size);
         /* This for loop only works because the first "iteration" is completed with a seperate function before the for loop
         * Otherwise, a ""> 0" in a loop will usually be one iteration short of whatever the variable's original value was.
         * This is also only useful if you will not use the value again, which applies in this case.
         * */
        for(; iterations > 0; iterations--) {
-           ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
+           ili9488_gram_write_continue(screen.Screen.pbuffer, screen.Screen.buffer_size);
         }
         
         /* Write the remainder */
-        ili9488_gram_write(screen.interface, screen.Screen.pbuffer, remainder + 1);
+        ili9488_gram_write(screen.Screen.pbuffer, remainder + 1);
     }
 
 
@@ -126,29 +126,29 @@ void ili9488_draw_hline(Ili9488Defines screen, Ili9488HVLine Line)
     level_log(TRACE, "Number of Bytes: %d", no_of_bytes);
     level_log(TRACE, "Byte of Color: %d", byte_of_color);
 
-    ili9488_set_ram_pointer(screen.interface, line_ptr);
+    ili9488_set_ram_pointer(line_ptr);
     
     // Only memset as many bytes as needed. 
     if(!iterations) {
         level_log(TRACE, "No Iterations necessary");
         memset(screen.Screen.pbuffer, byte_of_color, remainder);
-        ili9488_gram_write(screen.interface, screen.Screen.pbuffer, remainder);
+        ili9488_gram_write(screen.Screen.pbuffer, remainder);
 
     } else {
         level_log(TRACE, "Running %d iterations");
         memset(screen.Screen.pbuffer, byte_of_color, screen.Screen.buffer_size);
         
-        ili9488_gram_write(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
+        ili9488_gram_write(screen.Screen.pbuffer, screen.Screen.buffer_size);
         /* This for loop only works because the first "iteration" is completed with a seperate function before the for loop
         * Otherwise, a ""> 0" condition in a loop will usually be one iteration short of whatever the variable's original value was.
         * This is also only useful if you will not use the value again, which applies in this case.
         * */
        for(; iterations > 0; iterations--) {
-           ili9488_gram_write_continue(screen.interface, screen.Screen.pbuffer, screen.Screen.buffer_size);
+           ili9488_gram_write_continue(screen.Screen.pbuffer, screen.Screen.buffer_size);
         }
         
         /* Write the remainder. The remainder will always be smaller than the entire buffer, so a seperate memset is unnecessary */
-        ili9488_gram_write(screen.interface, screen.Screen.pbuffer, remainder);
+        ili9488_gram_write(screen.Screen.pbuffer, remainder);
     }
 
     level_log(TRACE, "Ili9488 Drew HLine");

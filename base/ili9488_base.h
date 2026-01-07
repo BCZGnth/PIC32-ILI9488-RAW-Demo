@@ -45,6 +45,33 @@ typedef struct CursorPointer{
 
 } Ili9488RamPointer;
 
+
+
+/* Font Structures 
+ * 
+ * FontOffset: 
+ * CharAttributes: 
+ */
+typedef struct Font_ByteOffset{
+    const uint8_t * pfont;
+    uint8_t ascii;
+
+    uint8_t height;
+    uint8_t width;
+    uint8_t width_pad;
+
+    uint8_t bytes_per_char;
+    // uint8_t control;
+} FontOffset;
+
+typedef struct CharacterAttributes{
+    uint8_t width;
+    uint8_t height;
+    uint8_t pad;
+    uint8_t width_pad;
+} CharAttributes;
+
+
 /* 
  * API Structures
  *
@@ -74,21 +101,22 @@ typedef struct WriteNumber{
     uint8_t constrained_length; // make a maximum number of characters that can be printed. (neede to right align the characters.)
     // uint8_t right_align;
     uint8_t scale;
-
-    Ili9488RamPointer ram_ptr;
-
     color_t fg;
 
+    FontOffset font;
+    Ili9488RamPointer ram_ptr;
 } Ili9488WriteNumber;
 
 typedef struct Print{
     char *       text;
-    uint8_t      length;
-    uint8_t      delay;
-    uint8_t      scale;
+    // uint8_t      length;
+    // uint8_t      delay;
+    // uint8_t      scale;
+    uint8_t      line_spacing;
     color_t      fg;
     color_t      bg;
 
+    FontOffset font;
     Ili9488RamPointer ram_ptr;
 } Ili9488Print;
 
@@ -152,31 +180,6 @@ typedef struct Rect{
     uint16_t weight;
     color_t color;
 } Ili9488Rect;
-
-
-/* Font Structures 
- * 
- * FontOffset: 
- * CharAttributes: 
- */
-typedef struct Font_ByteOffset{
-    const uint8_t * pfont;
-    uint8_t ascii;
-
-    uint8_t height;
-    uint8_t width;
-    uint8_t width_pad;
-
-    uint8_t bytes_per_char;
-    // uint8_t control;
-} FontOffset;
-
-typedef struct CharacterAttributes{
-    uint8_t width;
-    uint8_t height;
-    uint8_t pad;
-    uint8_t width_pad;
-} CharAttributes;
 
 
 /* 
@@ -249,14 +252,14 @@ typedef struct {
     union {
         uint8_t raw;
         struct {
-            unsigned reserved_24            : 1;  // D24 (bit 0)
+            unsigned reserved_24              : 1;  // D24 (bit 0)
             unsigned horizontal_refresh_order : 1; // D25 (bit 1): 0=Left to Right, 1=Right to Left
-            unsigned rgb_bgr_order          : 1;  // D26 (bit 2): 0=RGB, 1=BGR
-            unsigned vertical_refresh       : 1;  // D27 (bit 3): 0=Top to Bottom, 1=Bottom to Top
-            unsigned row_column_exchange    : 1;  // D28 (bit 4): 0=Normal, 1=Reverse
-            unsigned column_address_order   : 1;  // D29 (bit 5): 0=Left to Right, 1=Right to Left
-            unsigned row_address_order      : 1;  // D30 (bit 6): 0=Top to Bottom, 1=Bottom to Top
-            unsigned booster_voltage_status : 1;  // D31 (bit 7): 0=OFF, 1=ON
+            unsigned rgb_bgr_order            : 1;  // D26 (bit 2): 0=RGB, 1=BGR
+            unsigned vertical_refresh         : 1;  // D27 (bit 3): 0=Top to Bottom, 1=Bottom to Top
+            unsigned row_column_exchange      : 1;  // D28 (bit 4): 0=Normal, 1=Reverse
+            unsigned column_address_order     : 1;  // D29 (bit 5): 0=Left to Right, 1=Right to Left
+            unsigned row_address_order        : 1;  // D30 (bit 6): 0=Top to Bottom, 1=Bottom to Top
+            unsigned booster_voltage_status   : 1;  // D31 (bit 7): 0=OFF, 1=ON
         } bits;
     } param2;
     
@@ -300,13 +303,13 @@ typedef struct {
 } ili9488_display_status_t;
 
 typedef struct {
-    unsigned booster_voltage_status : 1; // Booster on and working (1) : Booster off or has fault (0)
-    unsigned idle_mode_on_off : 1; // On (1) : Off (0)
-    unsigned partial_mode_on_off : 1; // On (1) : Off (0)
-    unsigned sleep_in_out : 1; // Out (1) : In (0)
+    unsigned booster_voltage_status     : 1; // Booster on and working (1) : Booster off or has fault (0)
+    unsigned idle_mode_on_off           : 1; // On (1) : Off (0)
+    unsigned partial_mode_on_off        : 1; // On (1) : Off (0)
+    unsigned sleep_in_out               : 1; // Out (1) : In (0)
     unsigned display_normal_mode_on_off : 1; // On (1) : Off (0)
-    unsigned display_on_off : 1; // On (1) : Off (0)
-    unsigned reserved : 2;
+    unsigned display_on_off             : 1; // On (1) : Off (0)
+    unsigned reserved                   : 2;
 } ili9488_power_mode_t;
 
 typedef struct {

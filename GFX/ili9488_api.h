@@ -9,7 +9,7 @@
 #error MCC does not define __delay_ms Macro. Is _XTAL_FREQ defined?
 #endif
 
-void   ili9488_ram_write(    ili9488_interface_t inter,     Ili9488RamWrite args);
+void   ili9488_ram_write(                                   Ili9488RamWrite args);
 void   ili9488_fill_color(       Ili9488Defines screen,     Ili9488FillBlock args);
 // void   ili9488_ramWrite(          ScreenDefines Screen,     ili9488RamWrite    args);
 size_t ili9488_write_number(     Ili9488Defines screen,     Ili9488WriteNumber args);
