@@ -20,7 +20,7 @@ void ili9488_send_command(uint16_t len_cmd, ...)
     // Begin the reading of the variadic arguments
     va_start(params, uint16_t);
 
-    printf("len is %d\n", len);
+    // printf("len is %d\n", len);
     
     // Select Chip (Pin is active low) see page 39 of datasheet: https://www.hpinfotech.ro/ILI9488.pdf
     CS1_SetLow();
@@ -33,7 +33,7 @@ void ili9488_send_command(uint16_t len_cmd, ...)
     SPI1TCNT = 1;
     SPI1_ByteWrite(cmd);
     while(!PIR3bits.SPI1RXIF); //__delay_us(16);
-    // while(SPI1CON2bits.BUSY) {/* printf(".\n"): */ continue; }
+    // while(SPI1CON2bits.BUSY) {/* // printf(".\n"): */ continue; }
     SPI1_Close();
     #else
     fast_spi_write_byte(cmd);
@@ -48,14 +48,14 @@ void ili9488_send_command(uint16_t len_cmd, ...)
         for(uint8_t blah = 0; blah < len; blah++)
         {
             data = va_arg(params, uint8_t);
-            // printf("Send data: %d at index %d\n", data[blah], blah);
+            // // printf("Send data: %d at index %d\n", data[blah], blah);
             
             
             #ifdef HARDWARE_SPI
             SPI1_Open(HOST_CONFIG);
-            printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+            // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
             SPI1_BufferWrite(data, len);
-            printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
+            // printf("Busy Bit is: %d TCZIF Bit is: %d", SPI1CON2bits.BUSY, SPI1INTFbits.TCZIF);
             SPI1_Close();
             #else
             fast_spi_write_byte(data);

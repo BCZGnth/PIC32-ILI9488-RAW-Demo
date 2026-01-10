@@ -10,8 +10,8 @@ void ili9488_draw_vline(Ili9488Defines screen, Ili9488HVLine Line)
 {
 
     ADD_TO_STACK_DEPTH();
-    level_log(TRACE, "ILI9488 Draw VLine");
-    printf("(with color: %d)", Line.color);
+    // level_log(TRACE, "ILI9488 Draw VLine");
+    // printf("(with color: %d)", Line.color);
 
     uint16_t del_x, del_y;
     uint8_t byte_of_color = (Line.color & 0x7);
@@ -46,16 +46,16 @@ void ili9488_draw_vline(Ili9488Defines screen, Ili9488HVLine Line)
     uint24_t iterations = no_of_bytes / (uint24_t)screen.Screen.buffer_size;
     uint24_t remainder  = no_of_bytes % (uint24_t)screen.Screen.buffer_size;
 
-    level_log(TRACE, "Iterations:");
-    printf("%lu", (uint32_t)iterations);
-    level_log(TRACE, "Remainder:");
-    printf("%lu", (uint32_t)remainder);
-    level_log(TRACE, "Number of Pixels:");
-    printf("%lu", (uint32_t)no_of_pixels);
-    level_log(TRACE, "Number of Bytes:");
-    printf("%lu", (uint32_t)no_of_bytes);
-    level_log(TRACE, "Byte of Color:");
-    printf("%x", byte_of_color);
+    // level_log(TRACE, "Iterations:");
+    // printf("%lu", (uint32_t)iterations);
+    // level_log(TRACE, "Remainder:");
+    // printf("%lu", (uint32_t)remainder);
+    // level_log(TRACE, "Number of Pixels:");
+    // printf("%lu", (uint32_t)no_of_pixels);
+    // level_log(TRACE, "Number of Bytes:");
+    // printf("%lu", (uint32_t)no_of_bytes);
+    // level_log(TRACE, "Byte of Color:");
+    // printf("%x", byte_of_color);
 
     ili9488_set_ram_pointer(line_ptr);
 
@@ -81,7 +81,7 @@ void ili9488_draw_vline(Ili9488Defines screen, Ili9488HVLine Line)
     }
 
 
-    level_log(TRACE, "Ili9488 Drew VLine");
+    // level_log(TRACE, "Ili9488 Drew VLine");
     REMOVE_FROM_STACK_DEPTH();
 }
 
@@ -89,8 +89,8 @@ void ili9488_draw_hline(Ili9488Defines screen, Ili9488HVLine Line)
 {
 
     ADD_TO_STACK_DEPTH();
-    level_log(TRACE, "ILI9488 Draw HLine");
-    printf("(with color: %d)", Line.color);
+    // level_log(TRACE, "ILI9488 Draw HLine");
+    // printf("(with color: %d)", Line.color);
 
     uint8_t byte_of_color = 0;
     // byte_of_color |= (Line.color & 0x7);
@@ -127,27 +127,27 @@ void ili9488_draw_hline(Ili9488Defines screen, Ili9488HVLine Line)
     uint24_t iterations = no_of_bytes / (uint24_t)screen.Screen.buffer_size;
     uint24_t remainder  = no_of_bytes % (uint24_t)screen.Screen.buffer_size;
 
-    level_log(TRACE, "Iterations:");
-    printf("%lu", (uint32_t)iterations);
-    level_log(TRACE, "Remainder:");
-    printf("%lu", (uint32_t)remainder);
-    level_log(TRACE, "Number of Pixels:");
-    printf("%lu", (uint32_t)no_of_pixels);
-    level_log(TRACE, "Number of Bytes:");
-    printf("%lu", (uint32_t)no_of_bytes);
-    level_log(TRACE, "Byte of Color:");
-    printf("0x%x", byte_of_color);
+    // level_log(TRACE, "Iterations:");
+    // printf("%lu", (uint32_t)iterations);
+    // level_log(TRACE, "Remainder:");
+    // printf("%lu", (uint32_t)remainder);
+    // level_log(TRACE, "Number of Pixels:");
+    // printf("%lu", (uint32_t)no_of_pixels);
+    // level_log(TRACE, "Number of Bytes:");
+    // printf("%lu", (uint32_t)no_of_bytes);
+    // level_log(TRACE, "Byte of Color:");
+    // printf("0x%x", byte_of_color);
 
     ili9488_set_ram_pointer(line_ptr);
 
     // Only memset as many bytes as needed. 
     if(!iterations) {
-        level_log(TRACE, "No Iterations necessary");
+        // level_log(TRACE, "No Iterations necessary");
         memset(screen.Screen.pbuffer, byte_of_color, (size_t)remainder);
         ili9488_gram_write(screen.Screen.pbuffer, remainder);
 
     } else {
-        level_log(TRACE, "Running %d iterations");
+        // level_log(TRACE, "Running %d iterations");
         memset(screen.Screen.pbuffer, byte_of_color, screen.Screen.buffer_size);
         
         ili9488_gram_write(screen.Screen.pbuffer, screen.Screen.buffer_size);
@@ -163,14 +163,14 @@ void ili9488_draw_hline(Ili9488Defines screen, Ili9488HVLine Line)
         ili9488_gram_write(screen.Screen.pbuffer, remainder);
     }
 
-    level_log(TRACE, "Ili9488 Drew HLine");
+    // level_log(TRACE, "Ili9488 Drew HLine");
     REMOVE_FROM_STACK_DEPTH();
 }
 
 void ili9488_draw_rect(Ili9488Defines screen, Ili9488Rect Rect){
     // ili9488_send_command(screen, SET_DISPLAY_ON_OUTPUT_IGNORES_RAM_CONTENT);
     ADD_TO_STACK_DEPTH();
-    level_log(TRACE, "Ili9488 Draw Rectangle");
+    // level_log(TRACE, "Ili9488 Draw Rectangle");
 
     uint16_t hlength = (Rect.xend - Rect.xstart + 1);
     // uint8_t hxstart = Rect.xstart + Rect.weight;
@@ -214,7 +214,7 @@ void ili9488_draw_rect(Ili9488Defines screen, Ili9488Rect Rect){
     ili9488_draw_vline(screen, vline2);
 
     // ili9488_send_command(screen, SET_DISPLAY_ON_RESUME_RAM_CONTENT_DISPLAY);
-    level_log(TRACE, "ILI9488 Drew Rectangle");
+    // level_log(TRACE, "ILI9488 Drew Rectangle");
     REMOVE_FROM_STACK_DEPTH();
 }
 

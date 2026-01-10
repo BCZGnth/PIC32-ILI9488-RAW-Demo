@@ -261,12 +261,12 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
 //     uint16_t size = (w * 24) / 8;
     
 //     // Debug output: check the first 16 bytes
-//     /*printf("DMA send check (y=%d, size=%d)\r\n", y, size);
+//     /*// printf("DMA send check (y=%d, size=%d)\r\n", y, size);
 //     for (int i = 0; i < 16; i++)
 //     {
-//         printf("%02X ", pLine[i]);
+//         // printf("%02X ", pLine[i]);
 //     }
-//     printf("\r\n");*/
+//     // printf("\r\n");*/
         
 //     // Start transfer via DMA
 //     DMA0_to_SPI1_Data_Transmission_Proc(pLine, size);
