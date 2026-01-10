@@ -242,7 +242,7 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
      * Load the data_to_write buffer with the character from our variable
      * Use sn// printf because it allows overwrite protection that always ends in a null terminator
      */
-    number_of_chars_written = sn// printf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%lu", args.data); // putting zeros at the end of the string so that it is less noise to the viewer
+    number_of_chars_written = snprintf(&data_to_write[0], MAX_NUMBER_OF_CHARS, "%lu", args.data); // putting zeros at the end of the string so that it is less noise to the viewer
     if(number_of_chars_written <= 0) {
         // level_log(ERROR, "sn// printf call did not write data to a buffer. Possibly you have a bad args.data");
     }

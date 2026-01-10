@@ -111,7 +111,7 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
     
     ili9488_send_command(ILI9488_POWER_CONTROL_4, 0x00);           //Power Control 3
     
-    ili9488_send_command(ILI9488_MEMORY_ACCESS_CONTROL, 0xA0);     //Memory Access:  d7    d6    d5    d4    d3    d2    d1  d0
+    ili9488_send_command(ILI9488_MEMORY_ACCESS_CONTROL, 0x60);     //Memory Access:  d7    d6    d5    d4    d3    d2    d1  d0
                                                                               //                MY    MX    MV    ML    BGR   MH    X   X
                                                                               //                1     0     1     0     0     0     0   0
 
