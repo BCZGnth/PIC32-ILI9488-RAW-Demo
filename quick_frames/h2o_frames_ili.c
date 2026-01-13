@@ -107,7 +107,8 @@ void generic_payload_frame(Ili9488Defines screen, uint32_t serial_number)
 
     /* Print Serial number */
     Ili9488WriteNumber ser_val = {
-        .constrained_length = 6,
+        // .constrained_length = 6,
+        .right_aligned = 1,
         .data = (int32_t)serial_number,
         .ram_ptr = {
             .start_x = ((screen.Screen.ScreenWidth - (20 * screen.Screen.offset_2x.width_pad)) / 2) + 10 * screen.Screen.offset_2x.width_pad + 1,
@@ -172,7 +173,8 @@ void pretty_payload_frame(Ili9488Defines screen, uint24_t serial_number)
 
     /* Print Serial number */
     Ili9488WriteNumber ser_val = {
-        .constrained_length = 6,
+        // .constrained_length = 6,
+        .right_aligned = 1,
         .data = (int32_t)serial_number,
         .ram_ptr = {
             .start_x = 0,

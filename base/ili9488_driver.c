@@ -135,6 +135,8 @@ Ili9488Defines ili9488_initialize(ili9488_interface_t interface, uint8_t * spibu
                                                               0x2c, 
                                                               0x02);           // Adjust Control
 
+    ili9488_send_command(ILI9488_WRITE_DISPLAY_BRIGHTNESS, 0xff); // Full Brightness
+
     // Sleep OUT (11h)
     ili9488_send_command(ILI9488_SLEEP_OUT);
     __delay_ms(120);

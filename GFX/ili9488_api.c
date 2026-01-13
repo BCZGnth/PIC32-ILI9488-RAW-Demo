@@ -224,7 +224,7 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
      */
 
     #define MAX_NUMBER_OF_CHARS 10
-    uint8_t n, number_of_chars_written; // the sn// printf function actually returns an integer value, but I hope that the amount of characters will never exceed 255...
+    uint16_t box_length = 0, msg_pixel_x_length = 0, number_of_chars_written = 0, right_align_pixel_offset = 0; // the sn// printf function actually returns an integer value, but I hope that the amount of characters will never exceed 255...
     unsigned char data_to_write[MAX_NUMBER_OF_CHARS]; // Don't really need to display numbers that are longer than 24 characters
     FontOffset write_num_off = args.font;
     // ili9488_set_ram_pointer(screen.interface, args.ram_ptr);
@@ -247,11 +247,16 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
         // level_log(ERROR, "sn// printf call did not write data to a buffer. Possibly you have a bad args.data");
     }
 
-    uint8_t right_align_pixel_offset = (args.constrained_length - number_of_chars_written) * write_num_off.width_pad;
-    if(number_of_chars_written > args.constrained_length) {
-        // level_log(WARNING, "Constrained length smaller than chars written." /*Setting Right align character offset to ZERO to eliminate memory corruption possibilities"*/ );
-        right_align_pixel_offset = 0;
+    if(args.right_aligned) {
+        box_length = args.ram_ptr.end_x - args.ram_ptr.start_x;
+        msg_pixel_x_length = number_of_chars_written * write_num_off.width_pad;
+        right_align_pixel_offset = box_length - msg_pixel_x_length;
+        if(msg_pixel_x_length > box_length) {
+            // level_log(WARNING, "Constrained length smaller than chars written." /*Setting Right align character offset to ZERO to eliminate memory corruption possibilities"*/ );
+            right_align_pixel_offset = 0;
+        }
     }
+
     // level_log(TRACE, "Right-align offset is:");
     // printf("%d", right_align_pixel_offset);
 
@@ -285,7 +290,7 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
     // level_log(TRACE, "ILI9488: Done Writing Number");
     REMOVE_FROM_STACK_DEPTH(); // ili9488_write_number
 
-    return args.constrained_length * 6;
+    return msg_pixel_x_length;
 }
 
 
@@ -303,15 +308,18 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
     // level_log(TRACE, "Foreground Color:");
     // printf("0x%x", args.fg);
 
-    /* Lock the background black */
-    args.bg = BLACK;
+    if(args.clear_before) {
+        /* Lock the background black */
+        args.bg = BLACK;
 
-    Ili9488FillBlock background = {
-        .color = args.bg,
-        .ram_ptr = args.ram_ptr
-    };
+        Ili9488FillBlock background = {
+            .color = args.bg,
+            .ram_ptr = args.ram_ptr
+        };
 
-    ili9488_fill_color(screen, background);
+        ili9488_fill_color(screen, background);
+    }
+
     // uint16_t tmp16; // A variable to hold the 16 bit value of a scaled byte
     // uint8_t tmp[2]; // tmp16 will get split into these two bytes to get the right endianness when sending the data over the i2c bus.
     uint8_t preserve_frame = 0;
@@ -442,6 +450,7 @@ size_t ili9488_print(Ili9488Defines screen, Ili9488Print args) {
             /* Increment past the newline character, so that we write the next character after it. */
             msg_letter++;
             msg_char = *(msg_letter);
+            continue;
         }
 
         yoff = (char_height * row_increment);
@@ -755,4 +764,3 @@ void ili9488_clear_block(Ili9488Defines screen, Ili9488RamPointer args)
 //     REMOVE_FROM_STACK_DEPTH();
 //     return;
 // }
-
