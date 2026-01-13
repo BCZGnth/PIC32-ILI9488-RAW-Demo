@@ -87,6 +87,22 @@ void ili9488_draw_vline(Ili9488Defines screen, Ili9488HVLine Line)
 
 void ili9488_draw_hline(Ili9488Defines screen, Ili9488HVLine Line)
 {
+    /* The screen seems to have a problem wherein 8 pixels ahead of the pointer are turned black. 
+     * This problem seems to occur at the end of writes as well. The last 8 bits (or pixels) of
+     * a write will always be black...To remedy this there are two options.
+     *      1) expand the ram pointer to account for these pixels
+     *      2) don't write the last 8 pixels.
+     * Both options have their downfalls, and the PIC isn't fast enough to read from the screen and 
+     * Then decide what to do and then write. That would take probably 250ms or more, since I don't
+     * really have fast read capabilities right now.*/
+
+    uint24_t no_of_pixels =  Line.length * Line.weight;
+    no_of_pixels = no_of_pixels + (no_of_pixels % 2); // Evening the no_of_pixels variable
+
+    /* For now, to fix this problem, */
+    /* Add an appropriate amount of length to the line to mitigate the black artifact */
+     Line.length += (8 / (Line.weight - (Line.weight % 2)));
+     /* If the line weight is greater than 8, nothing is added to the length. */
 
     ADD_TO_STACK_DEPTH();
     // level_log(TRACE, "ILI9488 Draw HLine");
@@ -100,6 +116,7 @@ void ili9488_draw_hline(Ili9488Defines screen, Ili9488HVLine Line)
     /* Check for line weight errors */
     if( Line.weight > (screen.Screen.ScreenWidth / 2))
     { Line.weight = screen.Screen.ScreenWidth / 2 - 1; }
+
     /* Give lines the correct weighting. This is a fix for having lines on the end of a screen that are not displayed correctly.*/
     if(Line.ystart > (screen.Screen.ScreenHeight / 2))
     { Line.ystart = Line.ystart - Line.weight + 1; }
@@ -112,11 +129,10 @@ void ili9488_draw_hline(Ili9488Defines screen, Ili9488HVLine Line)
     };
 
     /* Add "1" for adjusting the Zero-indexed pixel coordinate numbers */
-    del_x = (line_ptr.end_x - line_ptr.start_x) + 1;
-    del_y = (line_ptr.end_y - line_ptr.start_y) + 1;
-
-    uint24_t no_of_pixels =  del_x * del_y;
-    no_of_pixels = no_of_pixels + (no_of_pixels % 2); // Evening the no_of_numbers variable
+    /* Before the Artifact removal, these were used to calculate the length of the packet
+     * The calculation is done at the top of the function now.  */
+    // del_x = (line_ptr.end_x - line_ptr.start_x) + 1;
+    // del_y = (line_ptr.end_y - line_ptr.start_y) + 1;
 
     uint24_t no_of_bytes = no_of_pixels / (uint24_t)2;
 
@@ -218,3 +234,29 @@ void ili9488_draw_rect(Ili9488Defines screen, Ili9488Rect Rect){
     REMOVE_FROM_STACK_DEPTH();
 }
 
+
+void ili9488_loading_bar(Ili9488Defines screen) {
+    
+    static Ili9488HVLine loading_bar = {
+        .color = CYAN,
+        .ystart = 316,
+        .length = 5,
+        .weight = 5,
+    };
+
+    loading_bar.ystart = screen.Screen.ScreenHeight - 5;
+
+    /* Could implement some waiting visualization function here */
+    loading_bar.length += 5;
+    loading_bar.xstart += 5;
+    if(loading_bar.xstart + loading_bar.length > screen.Screen.ScreenWidth - 10) {
+        loading_bar.length = 5;
+        loading_bar.xstart = 4;
+        if(loading_bar.color) {
+            loading_bar.color = BLACK;
+        } else {
+            loading_bar.color = CYAN;
+        }
+    }
+    ili9488_draw_hline(screen, loading_bar);
+}
