@@ -99,6 +99,7 @@ typedef struct CharacterAttributes{
 typedef struct WriteNumber{
     int32_t data;
     unsigned int right_aligned:1; // make a maximum number of characters that can be printed. (neede to right align the characters.)
+    unsigned int clear_before:1;
     // uint8_t right_align;
     unsigned int scale:7;
     color_t fg;

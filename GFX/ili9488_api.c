@@ -273,6 +273,7 @@ size_t ili9488_write_number(Ili9488Defines screen, Ili9488WriteNumber args) {
         .ram_ptr      = args.ram_ptr,
         .line_spacing = 0,
         .font         = args.font,
+        .clear_before = args.clear_before,
     }; 
 
     num_to_print.ram_ptr.start_x = args.ram_ptr.start_x + right_align_pixel_offset;
